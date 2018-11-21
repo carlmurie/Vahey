@@ -1,0 +1,111 @@
+---
+title: Process Vahey et al, 2018 Microarry PBMC Data
+author: Carl Murie
+date: '`r format(Sys.Date(), "%B %d, %Y")`'
+output: html_document
+---
+
+```{r load-packages, echo=FALSE, warning=FALSE, message=FALSE}
+library(knitr)
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message=FALSE)
+library(GEOquery)
+library(Biobase)
+library(tidyverse)
+library(magrittr)
+library(here)
+```
+
+
+##Obtaining normalized data and meta-data from GEO
+
+```{r getSome}
+setwd(here("data"))
+
+geoID <- "GSE18323"
+
+## get the data. There are two elements
+geoDat <- getGEO(geoID, destdir=".")
+
+gpl570 <- geoDat[[1]]        ##V5 with HGU133 Plus chip (39 samples)
+gpl571 <- geoDat[[2]]        ##V0 to V4 with HGU133A chip (215 samples)
+
+# check that they are ordered properly
+if(sum(colnames(exprs(geoDat[[1]])) != rownames(pData(geoDat[[1]]))) >0) {
+  stop("Mismatched data in gpl571")
+} 
+
+if(sum(colnames(exprs(geoDat[[2]])) != rownames(pData(geoDat[[2]]))) >0) {
+  stop("Mismatched data in gpl570")
+} 
+```
+
+##Reformat data
+
+```{r process}
+## extract only the useful meta data columns and create necessary factors
+pData(gpl570) %>%
+  select(title, 
+         geo_accession,
+         'group:ch1')  %>%
+  rename(description=title,
+         geo_id=geo_accession,
+         parasitemia="group:ch1") %>%
+  mutate(description=as.character(description),
+         pid=word(description, start=2),
+         disease=plyr::mapvalues(parasitemia, from="Delay", to="NonProtected"),
+         visit="T5",
+         chip="HGU133A") %>%
+  set_rownames(pData(gpl570)$geo_accession) ->
+  pData(gpl570)
+
+##sum(colnames(exprs(gpl570)) != rownames(pData(gpl570))) 
+
+# extract only the useful meta data columns
+pData(gpl571)[,c("title", "geo_accession", "group:ch1")] %>%
+  rename(description=title,
+         geo_id=geo_accession,
+         parasitemia="group:ch1") %>%
+  mutate(description=as.character(description),
+         pid=word(description, start=2),
+         pid=str_remove(pid, ","),
+         disease=plyr::mapvalues(parasitemia, from="Delay", to="NonProtected"),
+         visit=word(description, start=6),
+         chip="HGU133Plus") %>%
+  set_rownames(pData(gpl571)$geo_accession) ->
+  pData(gpl571)
+
+```
+
+##Subset genes on intersection of both chips  
+  
+The HGU133A 2.0 gene chip has 14500 genes while the HGU133 Plus 2.0 has 38500 genes. Use only the 14500 genes found in the HGU133A 2.0 gene chip
+
+```{r filter}
+gpl570 <- gpl570[rownames(gpl570) %in% rownames(gpl571),]
+```
+
+##Combine the 2 ExpressionSets
+
+```{r subset}
+
+## combine two ExpressionSets
+##annotation(gpl570) <- annotation(gpl571)
+##gpl <- BiocGenerics::combine(gpl571, gpl570) # doesn't work
+
+## combine the hard way
+gpl <- ExpressionSet(cbind(exprs(gpl571), exprs(gpl570)))
+bind_rows(pData(gpl571), pData(gpl570)) %>%
+  set_rownames(c(pData(gpl571)$geo_id, pData(gpl570)$geo_id)) -> 
+pData(gpl)
+
+## check that they are ordered properly
+if(sum(colnames(exprs(gpl)) != rownames(pData(gpl))) >0) {
+  stop("Mismatched data in gpl")
+} 
+```
+
+##Save filtered and combined ExpressionSet for further analysis  
+
+```{r save}
+saveRDS(gpl, here("data", "gpl_eset.Rds"))
+```

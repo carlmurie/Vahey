@@ -1,0 +1,133 @@
+---
+title: Quality Control
+author: Carl Murie
+date: '`r format(Sys.Date(), "%B %d, %Y")`'
+output: html_document
+
+---
+
+```{r load-packages, echo=FALSE, warning=FALSE, message=FALSE}
+library(knitr)
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message=FALSE)
+
+library(GEOquery)
+library(Biobase)
+library(tidyverse)
+library(data.table)
+library(here)
+library(RNASeqUtilities)
+library(limma)
+```
+
+
+```{r read}
+vahey_eset <- readRDS(here("data", "gpl_eset.Rds"))
+
+melt(exprs(vahey_eset), id.vars=1:ncol(exprs(vahey_eset))) %>%
+  rename(Gene=Var1, 
+         geo_id=Var2, 
+         read=value) %>%
+  mutate(Gene=as.character(Gene),
+         geo_id=as.character(geo_id)) %>%
+  inner_join(pData(vahey_eset)[,c("geo_id", 
+                                  "pid", 
+                                  "parasitemia", 
+                                  "disease", 
+                                  "visit",
+                                  "chip")], 
+             by="geo_id") %>%
+  mutate(visit = factor(visit, levels=c("T0", "T1", "T2", "T3", "T4", "T5")),
+                        ordered=TRUE) ->
+  vahey_dt
+```
+
+#Experimental Design
+
+Microarray gene expression assay applied to PBMC samples of subjects exposed to RTS,S/AS01 or RTS,S/AS02 vaccine.  
+  
+**Microarrays**  
+HGU133A 2.0 - 14500 genes (used for all T5 samples)  
+HGU133 Plus 2.0 - 38500 genes (used for all non-T5 samples)  
+  
+The genes in the HGU133A are a subset of the genes in the HG133 Plus chip. The intersection of the genes from the 2 chips were used in this analysis which resulted in 14500 genes.  
+  
+**Factors**:  
+  
+* **visit**
+    + T0 - study entry (baseline)
+    + T1 - day of third vaccination
+    + T2 - 24h after T1
+    + T3 - 72h after T1
+    + T4 - 2 weeks after T1
+    + T5 - 5 days after challenge
+* **parasitemia** - response to malaria challenge
+    + Protected - vaccinated and protected from challenge  
+    + Delay - vaccinated and delayed parasitemia  
+    + NonProtected - vaccinated and not protected from challenge  
+    + InfectivityControl - not vaccinated and challenged  
+    + Unknown - not vaccinated and not challenged  
+* **disease** - identical to parasitemia but Delay was changed to Protected  
+
+##Sample sizes  
+  
+```{r samples}
+
+tab <- countSampleSizes(pData(vahey_eset), "visit", c("parasitemia"))
+headerKable(tab, labels="parasitemia", levels=5)
+```
+
+#Quality Control  
+  
+##Distribution  
+  
+There is a clear distinction between the T5 samples and all others, probably due to the use of different chips.
+```{r distributions}
+
+ggplot(vahey_dt, aes(x=geo_id, y=read, color=visit)) +
+  geom_boxplot()
+
+```
+
+##MDS
+
+```{r mds}
+mds <- plotMDS(exprs(vahey_eset), plot = FALSE)
+mds_tbl <- as_tibble(cbind(pData(vahey_eset), mds_x = mds$x, mds_y = mds$y))
+
+```
+
+###Chip
+
+The T5 samples are a clear clustered group which would motivate the use of chip type as a covariate in the analysis.  
+
+```{r chip}
+mds_tbl %>% 
+  ggplot(aes(x = mds_x, y = mds_y, color = chip)) + 
+  geom_point()
+```
+
+###Visit  
+  
+```{r visit}
+mds_tbl %>% 
+  ggplot(aes(x = mds_x, y = mds_y, color = visit)) + 
+  geom_point()
+```
+
+###Parasitemia
+
+```{r parasitemia}
+mds_tbl %>% 
+  ggplot(aes(x = mds_x, y = mds_y, color = parasitemia)) + 
+  geom_point()
+```
+
+###Disease
+
+```{r disease}
+mds_tbl %>% 
+  ggplot(aes(x = mds_x, y = mds_y, color = disease)) + 
+  geom_point()
+```
+
+###Chip: residuals of a linear model with chip as the independent variable

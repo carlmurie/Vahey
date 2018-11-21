@@ -1,9 +1,10 @@
 ---
-title: "Home"
+title: "Vahey et al. 2010 Analysis"
 site: workflowr::wflow_site
 output:
   workflowr::wflow_html:
     toc: false
 ---
 
-Welcome to my research website.
+##[Processing](processVahey.html)
+##[Quality Control](QC.html)  
