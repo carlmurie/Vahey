@@ -11,7 +11,7 @@
 
 <meta name="author" content="Carl Murie" />
 
-<meta name="date" content="2018-11-20" />
+<meta name="date" content="2018-11-26" />
 
 <title>Quality Control</title>
 
@@ -319,12 +319,12 @@ div.section {
 
 <h1 class="title toc-ignore">Quality Control</h1>
 <h4 class="author"><em>Carl Murie</em></h4>
-<h4 class="date"><em>November 20, 2018</em></h4>
+<h4 class="date"><em>November 26, 2018</em></h4>
 
 </div>
 
 
-<p><strong>Last updated:</strong> 2018-11-20</p>
+<p><strong>Last updated:</strong> 2018-11-26</p>
 <strong>workflowr checks:</strong> <small>(Click a bullet for more information)</small>
 <ul>
 <li>
@@ -348,11 +348,11 @@ div.section {
 </details>
 </li>
 <li>
-<p><details> <summary> <strong style="color:blue;">✔</strong> <strong>Repository version:</strong> 64c4259 </summary></p>
+<p><details> <summary> <strong style="color:blue;">✔</strong> <strong>Repository version:</strong> 2cfa7e7 </summary></p>
 Great! You are using Git for version control. Tracking code development and connecting the code version to the results is critical for reproducibility. The version displayed above was the version of the Git repository at the time these results were generated. <br><br> Note that you need to be careful to ensure that all relevant files for the analysis have been committed to Git prior to generating the results (you can use <code>wflow_publish</code> or <code>wflow_git_commit</code>). workflowr only checks the R Markdown file, but you know if there are other scripts or data files that it depends on. Below is the status of the Git repository when the results were generated:
 <pre><code>
 Ignored files:
-    Ignored:    docs/figure/
+    Ignored:    data/.Rhistory
 
 Untracked files:
     Untracked:  code/processGEOFiles.R
@@ -362,6 +362,8 @@ Untracked files:
     Untracked:  data/GSE18323-GPL571_series_matrix.txt.gz
     Untracked:  data/gpl_eset.Rds
     Untracked:  data/h.all.v5.0.symbols.gmt
+    Untracked:  docs/figure/analysis_DEG.Rmd/
+    Untracked:  docs/figure/analysis_PCA.Rmd/
 
 </code></pre>
 Note that any generated files, e.g. HTML, png, CSS, etc., are not included in this status report because it is ok for generated content to have uncommitted changes. </details>
@@ -395,6 +397,40 @@ Message
 Rmd
 </td>
 <td style="text-align:left;">
+2cfa7e7
+</td>
+<td style="text-align:left;">
+carlmurie
+</td>
+<td style="text-align:left;">
+2018-11-26
+</td>
+<td style="text-align:left;">
+publish project
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+html
+</td>
+<td style="text-align:left;">
+c0f65f8
+</td>
+<td style="text-align:left;">
+carlmurie
+</td>
+<td style="text-align:left;">
+2018-11-20
+</td>
+<td style="text-align:left;">
+Build site.
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Rmd
+</td>
+<td style="text-align:left;">
 64c4259
 </td>
 <td style="text-align:left;">
@@ -416,9 +452,9 @@ initial commit
 <h1>Experimental Design</h1>
 <p>Microarray gene expression assay applied to PBMC samples of subjects exposed to RTS,S/AS01 or RTS,S/AS02 vaccine.</p>
 <p><strong>Microarrays</strong><br />
-HGU133A 2.0 - 14500 genes (used for all T5 samples)<br />
-HGU133 Plus 2.0 - 38500 genes (used for all non-T5 samples)</p>
-<p>The genes in the HGU133A are a subset of the genes in the HG133 Plus chip. The intersection of the genes from the 2 chips were used in this analysis which resulted in 14500 genes.</p>
+HGU133A 2.0 - 13515 genes (used for all T5 samples)<br />
+HGU133 Plus 2.0 - 23521 genes (used for all non-T5 samples)</p>
+<p>The genes in the HGU133A are a subset of the genes in the HG133 Plus chip. The intersection of the genes from the 2 chips were used in this analysis which resulted in 13515 genes.</p>
 <p><strong>Factors</strong>:</p>
 <ul>
 <li><strong>visit</strong>
@@ -440,13 +476,13 @@ HGU133 Plus 2.0 - 38500 genes (used for all non-T5 samples)</p>
 </li>
 <li>InfectivityControl - not vaccinated and challenged<br />
 </li>
-<li>Unknown - not vaccinated and not challenged<br />
-</li>
+<li>Unknown - unknown</li>
 </ul></li>
 <li><strong>disease</strong> - identical to parasitemia but Delay was changed to Protected</li>
 </ul>
 <div id="sample-sizes" class="section level2">
 <h2>Sample sizes</h2>
+<p>There are 12 samples that are labeled InfectivityControl. They do not have time-points</p>
 <table class="table table-striped table-hover table-condensed" style="width: auto !important; ">
 <thead>
 <tr>
@@ -631,6 +667,36 @@ T5
 <div id="distribution" class="section level2">
 <h2>Distribution</h2>
 <p>There is a clear distinction between the T5 samples and all others, probably due to the use of different chips. <img src="figure/QC.Rmd/distributions-1.png" width="672" style="display: block; margin: auto;" /></p>
+<details> <summary><em>Expand here to see past versions of distributions-1.png:</em></summary>
+<table style="border-collapse:separate; border-spacing:5px;">
+<thead>
+<tr>
+<th style="text-align:left;">
+Version
+</th>
+<th style="text-align:left;">
+Author
+</th>
+<th style="text-align:left;">
+Date
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+c0f65f8
+</td>
+<td style="text-align:left;">
+carlmurie
+</td>
+<td style="text-align:left;">
+2018-11-20
+</td>
+</tr>
+</tbody>
+</table>
+<p></details></p>
 </div>
 <div id="mds" class="section level2">
 <h2>MDS</h2>
@@ -638,18 +704,138 @@ T5
 <h3>Chip</h3>
 <p>The T5 samples are a clear clustered group which would motivate the use of chip type as a covariate in the analysis.</p>
 <p><img src="figure/QC.Rmd/chip-1.png" width="672" style="display: block; margin: auto;" /></p>
+<details> <summary><em>Expand here to see past versions of chip-1.png:</em></summary>
+<table style="border-collapse:separate; border-spacing:5px;">
+<thead>
+<tr>
+<th style="text-align:left;">
+Version
+</th>
+<th style="text-align:left;">
+Author
+</th>
+<th style="text-align:left;">
+Date
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+c0f65f8
+</td>
+<td style="text-align:left;">
+carlmurie
+</td>
+<td style="text-align:left;">
+2018-11-20
+</td>
+</tr>
+</tbody>
+</table>
+<p></details></p>
 </div>
 <div id="visit" class="section level3">
 <h3>Visit</h3>
 <p><img src="figure/QC.Rmd/visit-1.png" width="672" style="display: block; margin: auto;" /></p>
+<details> <summary><em>Expand here to see past versions of visit-1.png:</em></summary>
+<table style="border-collapse:separate; border-spacing:5px;">
+<thead>
+<tr>
+<th style="text-align:left;">
+Version
+</th>
+<th style="text-align:left;">
+Author
+</th>
+<th style="text-align:left;">
+Date
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+c0f65f8
+</td>
+<td style="text-align:left;">
+carlmurie
+</td>
+<td style="text-align:left;">
+2018-11-20
+</td>
+</tr>
+</tbody>
+</table>
+<p></details></p>
 </div>
 <div id="parasitemia" class="section level3">
 <h3>Parasitemia</h3>
 <p><img src="figure/QC.Rmd/parasitemia-1.png" width="672" style="display: block; margin: auto;" /></p>
+<details> <summary><em>Expand here to see past versions of parasitemia-1.png:</em></summary>
+<table style="border-collapse:separate; border-spacing:5px;">
+<thead>
+<tr>
+<th style="text-align:left;">
+Version
+</th>
+<th style="text-align:left;">
+Author
+</th>
+<th style="text-align:left;">
+Date
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+c0f65f8
+</td>
+<td style="text-align:left;">
+carlmurie
+</td>
+<td style="text-align:left;">
+2018-11-20
+</td>
+</tr>
+</tbody>
+</table>
+<p></details></p>
 </div>
 <div id="disease" class="section level3">
 <h3>Disease</h3>
 <p><img src="figure/QC.Rmd/disease-1.png" width="672" style="display: block; margin: auto;" /></p>
+<details> <summary><em>Expand here to see past versions of disease-1.png:</em></summary>
+<table style="border-collapse:separate; border-spacing:5px;">
+<thead>
+<tr>
+<th style="text-align:left;">
+Version
+</th>
+<th style="text-align:left;">
+Author
+</th>
+<th style="text-align:left;">
+Date
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+c0f65f8
+</td>
+<td style="text-align:left;">
+carlmurie
+</td>
+<td style="text-align:left;">
+2018-11-20
+</td>
+</tr>
+</tbody>
+</table>
+<p></details></p>
 </div>
 <div id="chip-residuals-of-a-linear-model-with-chip-as-the-independent-variable" class="section level3">
 <h3>Chip: residuals of a linear model with chip as the independent variable</h3>

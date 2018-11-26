@@ -11,7 +11,7 @@
 
 <meta name="author" content="Carl Murie" />
 
-<meta name="date" content="2018-11-20" />
+<meta name="date" content="2018-11-26" />
 
 <title>Process Vahey et al, 2018 Microarry PBMC Data</title>
 
@@ -318,12 +318,12 @@ div.section {
 
 <h1 class="title toc-ignore">Process Vahey et al, 2018 Microarry PBMC Data</h1>
 <h4 class="author"><em>Carl Murie</em></h4>
-<h4 class="date"><em>November 20, 2018</em></h4>
+<h4 class="date"><em>November 26, 2018</em></h4>
 
 </div>
 
 
-<p><strong>Last updated:</strong> 2018-11-20</p>
+<p><strong>Last updated:</strong> 2018-11-26</p>
 <strong>workflowr checks:</strong> <small>(Click a bullet for more information)</small>
 <ul>
 <li>
@@ -347,9 +347,12 @@ div.section {
 </details>
 </li>
 <li>
-<p><details> <summary> <strong style="color:blue;">✔</strong> <strong>Repository version:</strong> 64c4259 </summary></p>
+<p><details> <summary> <strong style="color:blue;">✔</strong> <strong>Repository version:</strong> 2cfa7e7 </summary></p>
 Great! You are using Git for version control. Tracking code development and connecting the code version to the results is critical for reproducibility. The version displayed above was the version of the Git repository at the time these results were generated. <br><br> Note that you need to be careful to ensure that all relevant files for the analysis have been committed to Git prior to generating the results (you can use <code>wflow_publish</code> or <code>wflow_git_commit</code>). workflowr only checks the R Markdown file, but you know if there are other scripts or data files that it depends on. Below is the status of the Git repository when the results were generated:
 <pre><code>
+Ignored files:
+    Ignored:    data/.Rhistory
+
 Untracked files:
     Untracked:  code/processGEOFiles.R
     Untracked:  data/GPL570.soft
@@ -358,7 +361,8 @@ Untracked files:
     Untracked:  data/GSE18323-GPL571_series_matrix.txt.gz
     Untracked:  data/gpl_eset.Rds
     Untracked:  data/h.all.v5.0.symbols.gmt
-    Untracked:  docs/figure/
+    Untracked:  docs/figure/analysis_DEG.Rmd/
+    Untracked:  docs/figure/analysis_PCA.Rmd/
 
 </code></pre>
 Note that any generated files, e.g. HTML, png, CSS, etc., are not included in this status report because it is ok for generated content to have uncommitted changes. </details>
@@ -387,6 +391,40 @@ Message
 </tr>
 </thead>
 <tbody>
+<tr>
+<td style="text-align:left;">
+Rmd
+</td>
+<td style="text-align:left;">
+2cfa7e7
+</td>
+<td style="text-align:left;">
+carlmurie
+</td>
+<td style="text-align:left;">
+2018-11-26
+</td>
+<td style="text-align:left;">
+publish project
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+html
+</td>
+<td style="text-align:left;">
+c0f65f8
+</td>
+<td style="text-align:left;">
+carlmurie
+</td>
+<td style="text-align:left;">
+2018-11-20
+</td>
+<td style="text-align:left;">
+Build site.
+</td>
+</tr>
 <tr>
 <td style="text-align:left;">
 Rmd
@@ -466,8 +504,20 @@ pData(gpl571)[,c(&quot;title&quot;, &quot;geo_accession&quot;, &quot;group:ch1&q
 </div>
 <div id="subset-genes-on-intersection-of-both-chips" class="section level2">
 <h2>Subset genes on intersection of both chips</h2>
-<p>The HGU133A 2.0 gene chip has 14500 genes while the HGU133 Plus 2.0 has 38500 genes. Use only the 14500 genes found in the HGU133A 2.0 gene chip</p>
+<p>The HGU133A 2.0 gene chip has 22277 transcripts while the HGU133 Plus 2.0 has 54675 transcripts. Use only the 22277 transcripts found in the HGU133A 2.0 gene chip</p>
 <pre class="r"><code>gpl570 &lt;- gpl570[rownames(gpl570) %in% rownames(gpl571),]</code></pre>
+</div>
+<div id="map-transcript-ids-to-gene-symbols" class="section level2">
+<h2>Map transcript ids to gene symbols</h2>
+<pre class="r"><code>## TODO look at purr for another way of doing this
+reads_570 &lt;- apply(exprs(gpl570), 2, 
+                function(x) tapply(x, fData(gpl570)$&quot;Gene Symbol&quot;, sum))[-1,]
+reads_571 &lt;- apply(exprs(gpl571), 2, 
+                function(x) tapply(x, fData(gpl571)$&quot;Gene Symbol&quot;, sum))[-1,]
+
+if(sum(rownames(reads_570) != rownames(reads_571)) &gt;0) {
+  stop(&quot;mapping to gene symbols failed&quot;)
+} </code></pre>
 </div>
 <div id="combine-the-2-expressionsets" class="section level2">
 <h2>Combine the 2 ExpressionSets</h2>
@@ -476,10 +526,10 @@ pData(gpl571)[,c(&quot;title&quot;, &quot;geo_accession&quot;, &quot;group:ch1&q
 ##gpl &lt;- BiocGenerics::combine(gpl571, gpl570) # doesn&#39;t work
 
 ## combine the hard way
-gpl &lt;- ExpressionSet(cbind(exprs(gpl571), exprs(gpl570)))
+gpl &lt;- ExpressionSet(cbind(reads_571, reads_570))
 bind_rows(pData(gpl571), pData(gpl570)) %&gt;%
   set_rownames(c(pData(gpl571)$geo_id, pData(gpl570)$geo_id)) -&gt; 
-pData(gpl)
+  pData(gpl)
 
 ## check that they are ordered properly
 if(sum(colnames(exprs(gpl)) != rownames(pData(gpl))) &gt;0) {
