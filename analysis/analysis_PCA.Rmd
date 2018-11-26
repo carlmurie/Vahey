@@ -1,0 +1,69 @@
+---
+title: PCA analysis
+author: Carl Murie
+date: '`r format(Sys.Date(), "%B %d, %Y")`'
+output: html_document
+
+---
+
+```{r load-packages, echo=FALSE, warning=FALSE, message=FALSE}
+library(knitr)
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message=FALSE)
+
+library(Biobase)
+library(tidyverse)
+library(data.table)
+library(here)
+library(RNASeqUtilities)
+library(magrittr)
+```
+
+```{r read}
+vahey_eset <- readRDS(here("data", "gpl_eset.Rds"))
+```
+
+#PCA
+
+PCA was conducted on the combination of three groups:  
+  
+* A: 36 subjects at T0 - before vaccination or challenge
+* B: 39 subjects at T5 - after vaccination and challenge
+* C: 12 subjects - InfectivityControls - no vaccination but challenged
+
+```{r subset}
+pData(vahey_eset) %>%
+  filter(visit=="T0" | visit=="T5" | parasitemia=="InfectivityControl") %$%
+  geo_id ->
+  sample_index
+
+pca_eset <- vahey_eset[,sample_index] 
+pData(pca_eset) %>%
+  mutate(group=plyr::mapvalues(pca_eset$visit, from=c("T0", "T5", NA), 
+                               to=c("A", "B", "C"))) ->
+  pData(pca_eset)
+
+```
+
+##Sample sizes  
+  
+
+```{r samples}
+
+tab <- countSampleSizes(pData(pca_eset), "parasitemia", "visit")
+headerKable(tab, label="visit", levels=2)
+```
+
+##PCA  
+  
+```{r pca}
+pca <- prcomp(t(exprs(pca_eset)), center=FALSE, scale=FALSE)
+rot <- data.frame(pca$x, group=pca_eset$group)
+gg_pca <- ggplot(rot, aes(x=PC1, y=PC2, color=group)) + 
+  geom_point(shape=16, size=1) +
+  labs(x="PC1") +
+  labs(y="PC2") + 
+  ggtitle("Group") + 
+  labs(color="Group")
+  
+print(gg_pca)
+```

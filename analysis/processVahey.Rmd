@@ -78,10 +78,25 @@ pData(gpl571)[,c("title", "geo_accession", "group:ch1")] %>%
 
 ##Subset genes on intersection of both chips  
   
-The HGU133A 2.0 gene chip has 14500 genes while the HGU133 Plus 2.0 has 38500 genes. Use only the 14500 genes found in the HGU133A 2.0 gene chip
+The HGU133A 2.0 gene chip has 22277 transcripts while the HGU133 Plus 2.0 has 54675 transcripts. Use only the 22277 transcripts found in the HGU133A 2.0 gene chip
 
 ```{r filter}
 gpl570 <- gpl570[rownames(gpl570) %in% rownames(gpl571),]
+```
+
+##Map transcript ids to gene symbols
+
+```{r map}
+
+## TODO look at purr for another way of doing this
+reads_570 <- apply(exprs(gpl570), 2, 
+                function(x) tapply(x, fData(gpl570)$"Gene Symbol", sum))[-1,]
+reads_571 <- apply(exprs(gpl571), 2, 
+                function(x) tapply(x, fData(gpl571)$"Gene Symbol", sum))[-1,]
+
+if(sum(rownames(reads_570) != rownames(reads_571)) >0) {
+  stop("mapping to gene symbols failed")
+} 
 ```
 
 ##Combine the 2 ExpressionSets
@@ -93,10 +108,10 @@ gpl570 <- gpl570[rownames(gpl570) %in% rownames(gpl571),]
 ##gpl <- BiocGenerics::combine(gpl571, gpl570) # doesn't work
 
 ## combine the hard way
-gpl <- ExpressionSet(cbind(exprs(gpl571), exprs(gpl570)))
+gpl <- ExpressionSet(cbind(reads_571, reads_570))
 bind_rows(pData(gpl571), pData(gpl570)) %>%
   set_rownames(c(pData(gpl571)$geo_id, pData(gpl570)$geo_id)) -> 
-pData(gpl)
+  pData(gpl)
 
 ## check that they are ordered properly
 if(sum(colnames(exprs(gpl)) != rownames(pData(gpl))) >0) {

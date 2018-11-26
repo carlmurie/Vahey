@@ -1,0 +1,85 @@
+---
+title: GSEA analysis
+author: Carl Murie
+date: '`r format(Sys.Date(), "%B %d, %Y")`'
+output: html_document
+
+---
+
+```{r load-packages, echo=FALSE, warning=FALSE, message=FALSE}
+library(knitr)
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message=FALSE)
+
+library(GSEABase)
+library(Biobase)
+library(tidyverse)
+library(data.table)
+library(here)
+library(RNASeqUtilities)
+library(limma)
+library(DT)
+library(magrittr)
+```
+
+```{r read}
+fdr_cut <- 0.25
+min_gene_set <- 5
+
+vahey_eset <- readRDS(here("data", "gpl_eset.Rds"))
+```
+
+```{r gsea_setup}
+## set up GSEA analysis
+btm_gtm <- getGmt(here("data/h.all.v5.0.symbols.gmt"))
+btm_ind <- ids2indices(geneIds(btm_gtm), rownames(vahey_eset))
+btm_ind <- btm_ind[sapply(btm_ind, length) > min_gene_set]
+```
+
+#Analysis
+
+The hallmark gene-sets from the Broad Institute's Molecular Signatures Database were used for the GSEA analysis.
+
+##GSEA: visit T4 protected vs non-protected (Protected - NonProtected)
+
+A FDR cutoff of <= `r fdr_cut` was used.  
+  
+```{r gsea1}
+
+## filter data for relevant time points and disease status
+
+pData(vahey_eset) %>% 
+  filter(visit == "T4") %>%
+  filter(disease == "Protected" | disease == "NonProtected") %$%
+    geo_id ->
+  sample_index
+
+gsea_eset <- vahey_eset[,sample_index]
+pData(gsea_eset) %>% 
+  mutate(disease=factor(disease, levels=c("NonProtected", "Protected"))) ->
+  pData(gsea_eset)
+```
+
+###Sample sizes  
+
+```{r samp_deg}
+tab <- countSampleSizes(pData(gsea_eset), "visit", "disease")
+headerKable(tab, labels="disease", levels=2)
+```
+
+```{r voom}
+
+design1 <- model.matrix(~disease, data=pData(gsea_eset))
+v1 <- voom(exprs(gsea_eset), design=design1)
+btm_camera <- as_tibble(camera(v1, btm_ind, design1, 
+                               contrast="diseaseProtected"), rownames="geneset")
+num_sig <- sum(btm_camera$FDR <= fdr_cut)
+```
+
+There were `r num_sig` significant gene-sets based on fdr cutoff.  
+  
+```{r gsea_output}
+btm_camera %>% 
+  filter(FDR < fdr_cut) %>% 
+  datatable() %>% 
+  formatRound(columns = c("PValue", "FDR"), digits = 4)
+```

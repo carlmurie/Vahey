@@ -39,6 +39,8 @@ melt(exprs(vahey_eset), id.vars=1:ncol(exprs(vahey_eset))) %>%
   mutate(visit = factor(visit, levels=c("T0", "T1", "T2", "T3", "T4", "T5")),
                         ordered=TRUE) ->
   vahey_dt
+
+ num_controls <- sum(vahey_eset$parasitemia=="InfectivityControl")
 ```
 
 #Experimental Design
@@ -46,10 +48,10 @@ melt(exprs(vahey_eset), id.vars=1:ncol(exprs(vahey_eset))) %>%
 Microarray gene expression assay applied to PBMC samples of subjects exposed to RTS,S/AS01 or RTS,S/AS02 vaccine.  
   
 **Microarrays**  
-HGU133A 2.0 - 14500 genes (used for all T5 samples)  
-HGU133 Plus 2.0 - 38500 genes (used for all non-T5 samples)  
+HGU133A 2.0 - 13515 genes (used for all T5 samples)  
+HGU133 Plus 2.0 - 23521 genes (used for all non-T5 samples)  
   
-The genes in the HGU133A are a subset of the genes in the HG133 Plus chip. The intersection of the genes from the 2 chips were used in this analysis which resulted in 14500 genes.  
+The genes in the HGU133A are a subset of the genes in the HG133 Plus chip. The intersection of the genes from the 2 chips were used in this analysis which resulted in 13515 genes.  
   
 **Factors**:  
   
@@ -65,10 +67,12 @@ The genes in the HGU133A are a subset of the genes in the HG133 Plus chip. The i
     + Delay - vaccinated and delayed parasitemia  
     + NonProtected - vaccinated and not protected from challenge  
     + InfectivityControl - not vaccinated and challenged  
-    + Unknown - not vaccinated and not challenged  
+    + Unknown - unknown
 * **disease** - identical to parasitemia but Delay was changed to Protected  
 
 ##Sample sizes  
+  
+There are `r num_controls` samples that are labeled InfectivityControl. They do not have time-points
   
 ```{r samples}
 
@@ -131,3 +135,9 @@ mds_tbl %>%
 ```
 
 ###Chip: residuals of a linear model with chip as the independent variable
+
+```{r post-chip}
+
+
+
+```

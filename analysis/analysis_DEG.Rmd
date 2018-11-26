@@ -1,0 +1,120 @@
+---
+title: DEG analysis
+author: Carl Murie
+date: '`r format(Sys.Date(), "%B %d, %Y")`'
+output: html_document
+
+---
+
+```{r load-packages, echo=FALSE, warning=FALSE, message=FALSE}
+library(knitr)
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message=FALSE)
+
+library(Biobase)
+library(tidyverse)
+library(data.table)
+library(here)
+library(RNASeqUtilities)
+library(limma)
+library(DT)
+library(magrittr)
+library(gridExtra)
+```
+
+```{r read}
+fdr_cut <- 0.01
+
+vahey_eset <- readRDS(here("data", "gpl_eset.Rds"))
+```
+
+#Analysis
+
+##Differential Expression of Genes (DEG) for timepoint T1 vs T2 and T3
+
+All subjects regardless of disease outcome were used to test for degs.
+
+```{r deg1}
+
+## filter data for relevant time points and disease status
+
+pData(vahey_eset) %>% 
+  ##filter(disease == "Protected" | disease == "NonProtected") %>% 
+  filter(visit == "T1" | visit == "T2" | visit =="T3") %$%
+    geo_id ->
+  sample_index
+
+deg1_eset <- vahey_eset[,sample_index]
+pData(deg1_eset) %>% 
+  mutate(visit=factor(visit)) ->
+  pData(deg1_eset)
+```
+
+###Sample sizes  
+
+```{r samp_deg}
+tab <- countSampleSizes(pData(deg1_eset), "visit", "disease")
+headerKable(tab, labels="disease", levels=3)
+```
+
+```{r voom}
+
+design1 <- model.matrix(~visit, data=pData(deg1_eset))
+v1 <- voom(exprs(deg1_eset), design=design1)
+dupCor <- duplicateCorrelation(v1, design=design1,
+                               block=deg1_eset$pid)$consensus.correlation
+fit1 <- lmFit(v1, design1, block=deg1_eset$pid, correlation=dupCor)
+eb_fit1 <- eBayes(fit1)
+```
+
+### T1 vs T2 DEGs (T2 - T1)  
+  
+FDR cutoff is `r fdr_cut`.  
+  
+```{r t2}
+fit1_t2 <- topTable(eb_fit1, number=Inf, coef="visitT2", sort.by="P")
+num_sig <- sum(fit1_t2$adj.P.Val <= fdr_cut)
+```
+  
+There are `r num_sig` significant genes based on fdr cutoff.  
+  
+```{r t2_output}
+graphs <- createDEGGraphs(fit1_t2, title="T2 - T1", fdrCut=fdr_cut)
+grid.arrange(grobs=graphs, nrow=1)
+
+fit1_t2 %>% 
+  as.tibble(rownames="gene") %>%
+  filter(adj.P.Val < .01) %>% 
+  select(-t, -B) %>%
+  rename(FDR=adj.P.Val) %>%
+  datatable() %>% 
+  formatRound(columns = 2:5, digits = 4)
+
+```
+
+
+### T1 vs T3 DEGs (T3 - T1)  
+  
+FDR cutoff is <= `r fdr_cut`.  
+  
+```{r t3}
+fit1_t3 <- topTable(eb_fit1, number=Inf, coef="visitT3", sort.by="P")
+num_sig <- sum(fit1_t3$adj.P.Val <= fdr_cut)
+```
+  
+There are `r num_sig` significant genes based on fdr cutoff.  
+  
+```{r t3_output}
+graphs <- createDEGGraphs(fit1_t3, title="T3 - T1", fdrCut=fdr_cut)
+grid.arrange(grobs=graphs, nrow=1)
+
+fit1_t3 %>% 
+  as.tibble(rownames="gene") %>%
+  filter(adj.P.Val < .01) %>% 
+  select(-t, -B) %>%
+  rename(FDR=adj.P.Val) %>%
+  datatable() %>% 
+  formatRound(columns = 2:5, digits = 4)
+
+```
+
+
