@@ -6,12 +6,20 @@ output:
     toc: false
 ---
 
+This project attempts to recreate the analysis presented in the paper:  
+  
+Expression of Genes Associated with Immunoproteaseome Processing of Major Histocompabtibility Complex Peptides is Indicative of Protection with Adjuvanated RTS,S Malaria Vaccine, Vahey et al. The Journal of Infectious Disease 2010:201:580-9
+
+##Experimental Design
+###[Design](experimental_design.html)
+####[Quality Control](QC.html)  
+
 ##Analysis
-####[DEG: T1 vs T2 and T3](analysis_DEG.html)
-####[GSEA: T4 vaccine vs no-vaccine](analysis_GSEA.html)
-####[PCA: Controls vs Protected vs NonProtected](analysis_PCA.html)
+####[Fig1: DEG: T1 vs T2 and T3](analysis_DEG.html)
+####[Fig2: PCA: Controls vs Protected vs NonProtected](analysis_PCA.html)
+####[Fig4: GSEA: T4 vaccine vs no-vaccine](analysis_GSEA.html)
+
 
 ##Appendix
 ####[Processing](processVahey.html)
-####[Quality Control](QC.html)  
 
