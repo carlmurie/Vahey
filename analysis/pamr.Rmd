@@ -1,0 +1,89 @@
+---
+title: Parasitemia classification with pamr
+author: Carl Murie
+date: '`r format(Sys.Date(), "%B %d, %Y")`'
+output: html_document
+
+---
+
+```{r load-packages, echo=FALSE, warning=FALSE, message=FALSE}
+library(knitr)
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message=FALSE)
+
+library(Biobase)
+library(tidyverse)
+library(here)
+library(RNASeqUtilities)
+library(magrittr)
+library(pamr)
+```
+
+```{r read}
+vahey_eset <- readRDS(here("data", "gpl_eset.Rds"))
+```
+
+#Classification with PAM
+
+PAM analysis was applied to samples from visit T5 and their parasitemia status was either Protected, NonProtected or Delayed.  
+  
+##Sample sizes  
+  
+
+```{r sample-size}
+
+pData(vahey_eset) %>%
+  filter(visit=="T5") %>%
+  filter(parasitemia=="Protected" | 
+           parasitemia=="NonProtected" | 
+           parasitemia=="Delay") %$%
+  geo_id ->
+  subset_ids
+
+vahey_sub <- vahey_eset[,subset_ids]
+
+tab <- countSampleSizes(pData(vahey_sub), "visit", "parasitemia")
+headerKable(tab, labels="parasitemia", levels=3)
+```
+
+##Apply PAM  
+  
+###Training  
+  
+Choose an appropriate threshold to minimize classification errors. We choose a value that minimizes the classification error of both groups. 
+  
+```{r pam, eval=TRUE, message=FALSE}
+
+## create pam list
+vah_dat <- list(x=exprs(vahey_sub),
+                y=vahey_sub$parasitemia,
+                genenames=rownames(vahey_sub))
+
+## get initial training parameters
+vah_train1 <- pamr.train(vah_dat, n.threshold=40)
+```
+
+
+```{r cross-validate}
+
+## use cross-validation to find optimal threshold
+vah_train2 <- pamr.cv(vah_train1, vah_dat)
+vah_train2
+```
+
+```{r plot_threshold}
+pamr.plotcv(vah_train2)
+vah_threshold <- 1.358
+```
+
+Based on the second plot above and that the Vahey paper found a classification set of 393 genes I chose a threshold value of `r vah_threshold` which uses 401 genes.
+ 
+##Plot similar to Vahey paper  
+  
+```{r pam_plot, eval=TRUE} 
+pamr.plotcvprob(vah_train1, vah_dat, threshold=vah_threshold)
+
+
+```
+
+This plot is similar to the one in the Vahey paper.  
+  
