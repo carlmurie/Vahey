@@ -54,7 +54,7 @@ pData(gpl570) %>%
          pid=word(description, start=2),
          disease=plyr::mapvalues(parasitemia, from="Delay", to="NonProtected"),
          visit="T5",
-         chip="HGU133A") %>%
+         chip="HGU133Plus") %>%
   set_rownames(pData(gpl570)$geo_accession) ->
   pData(gpl570)
 
@@ -70,19 +70,56 @@ pData(gpl571)[,c("title", "geo_accession", "group:ch1")] %>%
          pid=str_remove(pid, ","),
          disease=plyr::mapvalues(parasitemia, from="Delay", to="NonProtected"),
          visit=word(description, start=6),
-         chip="HGU133Plus") %>%
+         chip="HGU133A") %>%
   set_rownames(pData(gpl571)$geo_accession) ->
   pData(gpl571)
 
+##sum(colnames(exprs(gpl571)) != rownames(pData(gpl571))) 
 ```
 
 ##Subset genes on intersection of both chips  
   
-The HGU133A 2.0 gene chip has 22277 transcripts while the HGU133 Plus 2.0 has 54675 transcripts. Use only the 22277 transcripts found in the HGU133A 2.0 gene chip
+The HGU133A 2.0 gene chip has 22277 transcripts while the HGU133 Plus 2.0 has 54675 transcripts. Use only the 22277 transcripts found in the HGU133A 2.0 gene chip  
+  
+
+```{r test_transcript, echo=FALSE, eval=FALSE}
+
+pData(gpl571) %>% 
+  filter(!is.na(visit)) %>%           ## remove controls
+  filter(disease != "Unknown") %$%    ## remove Unknown subjects - no samples for T0 or T5
+    geo_id ->
+  sample_index
+
+deg_eset <- gpl571[,sample_index]
+
+design1 <- model.matrix(formula("~visit"), data=pData(deg_eset))
+v1 <- voom(exprs(deg_eset), design=design1)
+dupCor <- duplicateCorrelation(v1, design=design1,
+                               block=deg_eset$pid)$consensus.correlation
+fit1 <- lmFit(v1, design1, block=deg_eset$pid, correlation=dupCor)
+eb_fit1 <- eBayes(fit1)
+
+fit1_t <- topTable(eb_fit1, number=Inf, coef="visitT1", sort.by="P")
+ggplot(fit1_t, aes(x=P.Value)) + geom_histogram()
+
+fit1_t <- topTable(eb_fit1, number=Inf, coef="visitT2", sort.by="P")
+ggplot(fit1_t, aes(x=P.Value)) + geom_histogram()
+
+fit1_t <- topTable(eb_fit1, number=Inf, coef="visitT3", sort.by="P")
+ggplot(fit1_t, aes(x=P.Value)) + geom_histogram()
+
+fit1_t <- topTable(eb_fit1, number=Inf, coef="visitT4", sort.by="P")
+ggplot(fit1_t, aes(x=P.Value)) + geom_histogram()
+
+```
+
+
 
 ```{r filter}
 gpl570 <- gpl570[rownames(gpl570) %in% rownames(gpl571),]
 ```
+
+
 
 ##Map transcript ids to gene symbols
 
