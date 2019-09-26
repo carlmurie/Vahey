@@ -7,11 +7,12 @@
 <meta charset="utf-8" />
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
 
 
 <meta name="author" content="Carl Murie" />
 
-<meta name="date" content="2018-11-26" />
+<meta name="date" content="2019-09-26" />
 
 <title>Process Vahey et al, 2018 Microarry PBMC Data</title>
 
@@ -27,9 +28,8 @@
 <script src="site_libs/navigation-1.1/tabsets.js"></script>
 <link href="site_libs/highlightjs-9.12.0/textmate.css" rel="stylesheet" />
 <script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
-<link href="site_libs/font-awesome-5.0.13/css/fa-svg-with-js.css" rel="stylesheet" />
-<script src="site_libs/font-awesome-5.0.13/js/fontawesome-all.min.js"></script>
-<script src="site_libs/font-awesome-5.0.13/js/fa-v4-shims.min.js"></script>
+<link href="site_libs/font-awesome-5.1.0/css/all.css" rel="stylesheet" />
+<link href="site_libs/font-awesome-5.1.0/css/v4-shims.css" rel="stylesheet" />
 
 <style type="text/css">code{white-space: pre;}</style>
 <style type="text/css">
@@ -77,9 +77,7 @@ h6 {
 </style>
 
 
-</head>
 
-<body>
 
 <style type = "text/css">
 .main-container {
@@ -93,7 +91,6 @@ code {
 }
 img {
   max-width:100%;
-  height: auto;
 }
 .tabbed-pane {
   padding-top: 12px;
@@ -103,6 +100,9 @@ img {
 }
 button.code-folding-btn:focus {
   outline: none;
+}
+summary {
+  display: list-item;
 }
 </style>
 
@@ -118,7 +118,6 @@ body {
   padding-top: 56px;
   margin-top: -56px;
 }
-
 .section h2 {
   padding-top: 56px;
   margin-top: -56px;
@@ -138,6 +137,43 @@ body {
 .section h6 {
   padding-top: 56px;
   margin-top: -56px;
+}
+.dropdown-submenu {
+  position: relative;
+}
+.dropdown-submenu>.dropdown-menu {
+  top: 0;
+  left: 100%;
+  margin-top: -6px;
+  margin-left: -1px;
+  border-radius: 0 6px 6px 6px;
+}
+.dropdown-submenu:hover>.dropdown-menu {
+  display: block;
+}
+.dropdown-submenu>a:after {
+  display: block;
+  content: " ";
+  float: right;
+  width: 0;
+  height: 0;
+  border-color: transparent;
+  border-style: solid;
+  border-width: 5px 0 5px 5px;
+  border-left-color: #cccccc;
+  margin-top: 5px;
+  margin-right: -10px;
+}
+.dropdown-submenu:hover>a:after {
+  border-left-color: #ffffff;
+}
+.dropdown-submenu.pull-left {
+  float: none;
+}
+.dropdown-submenu.pull-left>.dropdown-menu {
+  left: -100%;
+  margin-left: 10px;
+  border-radius: 6px 0 6px 6px;
 }
 </style>
 
@@ -159,47 +195,65 @@ $(document).ready(function () {
 });
 </script>
 
-
-<div class="container-fluid main-container">
-
 <!-- tabsets -->
-<script>
-$(document).ready(function () {
-  window.buildTabsets("TOC");
-});
-</script>
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "&#xe258;";
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
 
 <!-- code folding -->
 
 
-
-
-<script>
-$(document).ready(function ()  {
-
-    // move toc-ignore selectors from section div to header
-    $('div.section.toc-ignore')
-        .removeClass('toc-ignore')
-        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
-
-    // establish options
-    var options = {
-      selectors: "h1,h2,h3",
-      theme: "bootstrap3",
-      context: '.toc-content',
-      hashGenerator: function (text) {
-        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_').toLowerCase();
-      },
-      ignoreSelector: ".toc-ignore",
-      scrollTo: 0
-    };
-    options.showAndHide = true;
-    options.smoothScroll = true;
-
-    // tocify
-    var toc = $("#TOC").tocify(options).data("toc-tocify");
-});
-</script>
 
 <style type="text/css">
 
@@ -248,8 +302,6 @@ div.tocify {
 
 .tocify-subheader .tocify-item {
   font-size: 0.90em;
-  padding-left: 25px;
-  text-indent: 0;
 }
 
 .tocify .list-group-item {
@@ -258,6 +310,16 @@ div.tocify {
 
 
 </style>
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
 
 <!-- setup 3col/9col grid for toc_float and main content  -->
 <div class="row-fluid">
@@ -317,151 +379,312 @@ div.section {
 
 
 <h1 class="title toc-ignore">Process Vahey et al, 2018 Microarry PBMC Data</h1>
-<h4 class="author"><em>Carl Murie</em></h4>
-<h4 class="date"><em>November 26, 2018</em></h4>
+<h4 class="author">Carl Murie</h4>
+<h4 class="date">September 26, 2019</h4>
 
 </div>
 
 
-<p><strong>Last updated:</strong> 2018-11-26</p>
-<strong>workflowr checks:</strong> <small>(Click a bullet for more information)</small>
-<ul>
+<p>
+<button type="button" class="btn btn-default btn-workflowr btn-workflowr-report" data-toggle="collapse" data-target="#workflowr-report">
+<span class="glyphicon glyphicon-list" aria-hidden="true"></span> workflowr <span class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span>
+</button>
+</p>
+<div id="workflowr-report" class="collapse">
+<ul class="nav nav-tabs">
+<li class="active">
+<a data-toggle="tab" href="#summary">Summary</a>
+</li>
 <li>
-<p><details> <summary> <strong style="color:blue;">✔</strong> <strong>R Markdown file:</strong> up-to-date </summary></p>
+<a data-toggle="tab" href="#checks"> Checks <span class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span> </a>
+</li>
+<li>
+<a data-toggle="tab" href="#versions">Past versions</a>
+</li>
+</ul>
+<div class="tab-content">
+<div id="summary" class="tab-pane fade in active">
+<p>
+<strong>Last updated:</strong> 2019-09-26
+</p>
+<p>
+<strong>Checks:</strong> <span class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span> 7 <span class="glyphicon glyphicon-exclamation-sign text-danger" aria-hidden="true"></span> 0
+</p>
+<p>
+<strong>Knit directory:</strong> <code>VaheyProject/</code> <span class="glyphicon glyphicon-question-sign" aria-hidden="true" title="This is the local directory in which the code in this file was executed."> </span>
+</p>
+<p>
+This reproducible <a href="http://rmarkdown.rstudio.com">R Markdown</a> analysis was created with <a
+  href="https://github.com/jdblischak/workflowr">workflowr</a> (version 1.4.0). The <em>Checks</em> tab describes the reproducibility checks that were applied when the results were created. The <em>Past versions</em> tab lists the development history.
+</p>
+<hr>
+</div>
+<div id="checks" class="tab-pane fade">
+<div id="workflowr-checks" class="panel-group">
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRMarkdownfilestronguptodate"> <span class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span> <strong>R Markdown file:</strong> up-to-date </a>
+</p>
+</div>
+<div id="strongRMarkdownfilestronguptodate" class="panel-collapse collapse">
+<div class="panel-body">
 <p>Great! Since the R Markdown file has been committed to the Git repository, you know the exact version of the code that produced these results.</p>
-</details>
-</li>
-<li>
-<p><details> <summary> <strong style="color:blue;">✔</strong> <strong>Environment:</strong> empty </summary></p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongEnvironmentstrongempty"> <span class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span> <strong>Environment:</strong> empty </a>
+</p>
+</div>
+<div id="strongEnvironmentstrongempty" class="panel-collapse collapse">
+<div class="panel-body">
 <p>Great job! The global environment was empty. Objects defined in the global environment can affect the analysis in your R Markdown file in unknown ways. For reproduciblity it’s best to always run the code in an empty environment.</p>
-</details>
-</li>
-<li>
-<p><details> <summary> <strong style="color:blue;">✔</strong> <strong>Seed:</strong> <code>set.seed(20181008)</code> </summary></p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongSeedstrongcodesetseed20181008code"> <span class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span> <strong>Seed:</strong> <code>set.seed(20181008)</code> </a>
+</p>
+</div>
+<div id="strongSeedstrongcodesetseed20181008code" class="panel-collapse collapse">
+<div class="panel-body">
 <p>The command <code>set.seed(20181008)</code> was run prior to running the code in the R Markdown file. Setting a seed ensures that any results that rely on randomness, e.g. subsampling or permutations, are reproducible.</p>
-</details>
-</li>
-<li>
-<p><details> <summary> <strong style="color:blue;">✔</strong> <strong>Session information:</strong> recorded </summary></p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongSessioninformationstrongrecorded"> <span class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span> <strong>Session information:</strong> recorded </a>
+</p>
+</div>
+<div id="strongSessioninformationstrongrecorded" class="panel-collapse collapse">
+<div class="panel-body">
 <p>Great job! Recording the operating system, R version, and package versions is critical for reproducibility.</p>
-</details>
-</li>
-<li>
-<p><details> <summary> <strong style="color:blue;">✔</strong> <strong>Repository version:</strong> c3cdf7e </summary></p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongCachestrongnone"> <span class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span> <strong>Cache:</strong> none </a>
+</p>
+</div>
+<div id="strongCachestrongnone" class="panel-collapse collapse">
+<div class="panel-body">
+<p>Nice! There were no cached chunks for this analysis, so you can be confident that you successfully produced the results during this run.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongFilepathsstrongrelative"> <span class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span> <strong>File paths:</strong> relative </a>
+</p>
+</div>
+<div id="strongFilepathsstrongrelative" class="panel-collapse collapse">
+<div class="panel-body">
+<p>Great job! Using relative paths to the files within your workflowr project makes it easier to run your code on other machines.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRepositoryversionstrongab59628"> <span class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span> <strong>Repository version:</strong> ab59628 </a>
+</p>
+</div>
+<div id="strongRepositoryversionstrongab59628" class="panel-collapse collapse">
+<div class="panel-body">
+<p>
 Great! You are using Git for version control. Tracking code development and connecting the code version to the results is critical for reproducibility. The version displayed above was the version of the Git repository at the time these results were generated. <br><br> Note that you need to be careful to ensure that all relevant files for the analysis have been committed to Git prior to generating the results (you can use <code>wflow_publish</code> or <code>wflow_git_commit</code>). workflowr only checks the R Markdown file, but you know if there are other scripts or data files that it depends on. Below is the status of the Git repository when the results were generated:
+</p>
 <pre><code>
 Ignored files:
+    Ignored:    .Rhistory
     Ignored:    data/.Rhistory
 
 Untracked files:
+    Untracked:  VaheyReport.tar.gz
+    Untracked:  analysis/DEG_Disease.Rmd
+    Untracked:  analysis/DEG_T0.Rmd
+    Untracked:  analysis/DEG_T0_Interaction.Rmd
+    Untracked:  analysis/DEG_T1.Rmd
+    Untracked:  analysis/DEG_T1_Interaction.Rmd
+    Untracked:  analysis/GSEA_Disease.Rmd
+    Untracked:  analysis/GSEA_T0.Rmd
+    Untracked:  analysis/GSEA_T0_Interaction.Rmd
+    Untracked:  analysis/GSEA_T1.Rmd
+    Untracked:  analysis/GSEA_T1_Interaction.Rmd
+    Untracked:  analysis/analysis_T4_disease.Rmd
+    Untracked:  analysis/analysis_T5_disease.Rmd
+    Untracked:  analysis/ciber_MLratio.Rmd
     Untracked:  code/processGEOFiles.R
+    Untracked:  data/BTM_for_GSEA_20131008.gmt
     Untracked:  data/GPL570.soft
     Untracked:  data/GPL571.soft
     Untracked:  data/GSE18323-GPL570_series_matrix.txt.gz
     Untracked:  data/GSE18323-GPL571_series_matrix.txt.gz
     Untracked:  data/gpl_eset.Rds
     Untracked:  data/h.all.v5.0.symbols.gmt
+    Untracked:  data/vahey_ciber_cells.csv
+    Untracked:  data/vahey_exprs.tsv
+    Untracked:  docs/figure/DEG_Disease.Rmd/
+    Untracked:  docs/figure/DEG_T0.Rmd/
+    Untracked:  docs/figure/DEG_T0_Interaction.Rmd/
+    Untracked:  docs/figure/DEG_T1.Rmd/
+    Untracked:  docs/figure/DEG_T1_Interaction.Rmd/
+    Untracked:  docs/figure/GSEA_Disease.Rmd/
+    Untracked:  docs/figure/GSEA_T0.Rmd/
+    Untracked:  docs/figure/GSEA_T0_Interaction.Rmd/
+    Untracked:  docs/figure/GSEA_T1.Rmd/
+    Untracked:  docs/figure/GSEA_T1_Interaction.Rmd/
+    Untracked:  docs/figure/ciber_MLratio.Rmd/
+    Untracked:  output/Vahey_GSEA_disease.csv
+    Untracked:  output/dmso_M3_both_disease.csv
+    Untracked:  output/dmso_M3_old_disease.csv
+    Untracked:  output/dmso_M3_young_disease.csv
+    Untracked:  output/pam_res.Rda
+
+Unstaged changes:
+    Modified:   analysis/analysis_PCA.Rmd
+    Modified:   analysis/experimental_design.Rmd
+    Modified:   analysis/index.Rmd
 
 </code></pre>
-Note that any generated files, e.g. HTML, png, CSS, etc., are not included in this status report because it is ok for generated content to have uncommitted changes. </details>
-</li>
-</ul>
-<details> <summary> <small><strong>Expand here to see past versions:</strong></small> </summary>
-<ul>
-<table style="border-collapse:separate; border-spacing:5px;">
+<p>
+Note that any generated files, e.g. HTML, png, CSS, etc., are not included in this status report because it is ok for generated content to have uncommitted changes.
+</p>
+</div>
+</div>
+</div>
+</div>
+<hr>
+</div>
+<div id="versions" class="tab-pane fade">
+
+<p>
+These are the previous versions of the R Markdown and HTML files. If you’ve configured a remote Git repository (see <code>?wflow_git_remote</code>), click on the hyperlinks in the table below to view them.
+</p>
+<div class="table-responsive">
+<table class="table table-condensed table-hover">
 <thead>
 <tr>
-<th style="text-align:left;">
+<th>
 File
 </th>
-<th style="text-align:left;">
+<th>
 Version
 </th>
-<th style="text-align:left;">
+<th>
 Author
 </th>
-<th style="text-align:left;">
+<th>
 Date
 </th>
-<th style="text-align:left;">
+<th>
 Message
 </th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align:left;">
+<td>
 html
 </td>
-<td style="text-align:left;">
-f9dfd7e
+<td>
+1ed83ed
 </td>
-<td style="text-align:left;">
+<td>
 carlmurie
 </td>
-<td style="text-align:left;">
+<td>
 2018-11-26
 </td>
-<td style="text-align:left;">
+<td>
 Build site.
 </td>
 </tr>
 <tr>
-<td style="text-align:left;">
-Rmd
+<td>
+html
 </td>
-<td style="text-align:left;">
-2cfa7e7
+<td>
+f9dfd7e
 </td>
-<td style="text-align:left;">
+<td>
 carlmurie
 </td>
-<td style="text-align:left;">
+<td>
 2018-11-26
 </td>
-<td style="text-align:left;">
+<td>
+Build site.
+</td>
+</tr>
+<tr>
+<td>
+Rmd
+</td>
+<td>
+2cfa7e7
+</td>
+<td>
+carlmurie
+</td>
+<td>
+2018-11-26
+</td>
+<td>
 publish project
 </td>
 </tr>
 <tr>
-<td style="text-align:left;">
+<td>
 html
 </td>
-<td style="text-align:left;">
+<td>
 c0f65f8
 </td>
-<td style="text-align:left;">
+<td>
 carlmurie
 </td>
-<td style="text-align:left;">
-2018-11-20
+<td>
+2018-11-21
 </td>
-<td style="text-align:left;">
+<td>
 Build site.
 </td>
 </tr>
 <tr>
-<td style="text-align:left;">
+<td>
 Rmd
 </td>
-<td style="text-align:left;">
+<td>
 64c4259
 </td>
-<td style="text-align:left;">
+<td>
 carlmurie
 </td>
-<td style="text-align:left;">
-2018-11-20
+<td>
+2018-11-21
 </td>
-<td style="text-align:left;">
+<td>
 initial commit
 </td>
 </tr>
 </tbody>
 </table>
-</ul>
-<p></details></p>
-<hr />
+</div>
+<hr>
+</div>
+</div>
+</div>
 <div id="obtaining-normalized-data-and-meta-data-from-geo" class="section level2">
 <h2>Obtaining normalized data and meta-data from GEO</h2>
 <pre class="r"><code>setwd(here(&quot;data&quot;))
@@ -497,7 +720,7 @@ pData(gpl570) %&gt;%
          pid=word(description, start=2),
          disease=plyr::mapvalues(parasitemia, from=&quot;Delay&quot;, to=&quot;NonProtected&quot;),
          visit=&quot;T5&quot;,
-         chip=&quot;HGU133A&quot;) %&gt;%
+         chip=&quot;HGU133Plus&quot;) %&gt;%
   set_rownames(pData(gpl570)$geo_accession) -&gt;
   pData(gpl570)
 
@@ -513,9 +736,11 @@ pData(gpl571)[,c(&quot;title&quot;, &quot;geo_accession&quot;, &quot;group:ch1&q
          pid=str_remove(pid, &quot;,&quot;),
          disease=plyr::mapvalues(parasitemia, from=&quot;Delay&quot;, to=&quot;NonProtected&quot;),
          visit=word(description, start=6),
-         chip=&quot;HGU133Plus&quot;) %&gt;%
+         chip=&quot;HGU133A&quot;) %&gt;%
   set_rownames(pData(gpl571)$geo_accession) -&gt;
-  pData(gpl571)</code></pre>
+  pData(gpl571)
+
+##sum(colnames(exprs(gpl571)) != rownames(pData(gpl571))) </code></pre>
 </div>
 <div id="subset-genes-on-intersection-of-both-chips" class="section level2">
 <h2>Subset genes on intersection of both chips</h2>
@@ -554,11 +779,15 @@ if(sum(colnames(exprs(gpl)) != rownames(pData(gpl))) &gt;0) {
 <div id="save-filtered-and-combined-expressionset-for-further-analysis" class="section level2">
 <h2>Save filtered and combined ExpressionSet for further analysis</h2>
 <pre class="r"><code>saveRDS(gpl, here(&quot;data&quot;, &quot;gpl_eset.Rds&quot;))</code></pre>
-</div>
-<div id="session-information" class="section level2">
-<h2>Session information</h2>
+<br>
+<p>
+<button type="button" class="btn btn-default btn-workflowr btn-workflowr-sessioninfo" data-toggle="collapse" data-target="#workflowr-sessioninfo" style="display: block;">
+<span class="glyphicon glyphicon-wrench" aria-hidden="true"></span> Session information
+</button>
+</p>
+<div id="workflowr-sessioninfo" class="collapse">
 <pre class="r"><code>sessionInfo()</code></pre>
-<pre><code>R version 3.5.0 (2018-04-23)
+<pre><code>R version 3.6.1 (2019-07-05)
 Platform: x86_64-pc-linux-gnu (64-bit)
 Running under: Ubuntu 14.04.5 LTS
 
@@ -578,31 +807,29 @@ attached base packages:
 [8] base     
 
 other attached packages:
- [1] here_0.1            magrittr_1.5        forcats_0.3.0      
- [4] stringr_1.3.1       dplyr_0.7.99.9000   purrr_0.2.5        
- [7] readr_1.1.1         tidyr_0.8.0         tibble_1.4.99.9005 
-[10] ggplot2_3.0.0       tidyverse_1.2.1     GEOquery_2.48.0    
-[13] Biobase_2.40.0      BiocGenerics_0.26.0 knitr_1.20         
+ [1] here_0.1            magrittr_1.5        forcats_0.4.0      
+ [4] stringr_1.4.0       dplyr_0.8.3         purrr_0.3.2        
+ [7] readr_1.3.1         tidyr_0.8.3         tibble_2.1.3       
+[10] ggplot2_3.2.1       tidyverse_1.2.1     GEOquery_2.52.0    
+[13] Biobase_2.44.0      BiocGenerics_0.30.0 knitr_1.24         
 
 loaded via a namespace (and not attached):
- [1] tidyselect_0.2.5  haven_1.1.2       lattice_0.20-35  
- [4] colorspace_1.3-2  htmltools_0.3.6   yaml_2.2.0       
- [7] rlang_0.3.0.9000  R.oo_1.22.0       pillar_1.3.0.9001
-[10] withr_2.1.2       glue_1.3.0        R.utils_2.7.0    
-[13] modelr_0.1.1      readxl_1.1.0      plyr_1.8.4       
-[16] munsell_0.5.0     gtable_0.2.0      workflowr_1.1.1  
-[19] cellranger_1.1.0  rvest_0.3.2       R.methodsS3_1.7.1
-[22] evaluate_0.11     curl_3.2          broom_0.5.0      
-[25] Rcpp_1.0.0        backports_1.1.2   scales_1.0.0     
-[28] limma_3.36.1      jsonlite_1.5      hms_0.4.2        
-[31] digest_0.6.18     stringi_1.2.4     rprojroot_1.3-2  
-[34] grid_3.5.0        cli_1.0.1         tools_3.5.0      
-[37] lazyeval_0.2.1    crayon_1.3.4      whisker_0.3-2    
-[40] pkgconfig_2.0.2   xml2_1.2.0        lubridate_1.7.4  
-[43] rstudioapi_0.8    assertthat_0.2.0  rmarkdown_1.10   
-[46] httr_1.3.1        R6_2.3.0          nlme_3.1-137     
-[49] git2r_0.23.0      compiler_3.5.0   </code></pre>
+ [1] tidyselect_0.2.5 xfun_0.9         haven_2.1.1      lattice_0.20-38 
+ [5] colorspace_1.4-1 vctrs_0.2.0      generics_0.0.2   htmltools_0.3.6 
+ [9] yaml_2.2.0       rlang_0.4.0      pillar_1.4.2     withr_2.1.2     
+[13] glue_1.3.1       modelr_0.1.4     readxl_1.3.1     plyr_1.8.4      
+[17] munsell_0.5.0    gtable_0.3.0     workflowr_1.4.0  cellranger_1.1.0
+[21] rvest_0.3.4      evaluate_0.14    curl_4.0         broom_0.5.2     
+[25] Rcpp_1.0.2       backports_1.1.4  scales_1.0.0     limma_3.40.2    
+[29] jsonlite_1.6     fs_1.3.1         hms_0.5.1        digest_0.6.20   
+[33] stringi_1.4.3    rprojroot_1.3-2  grid_3.6.1       cli_1.1.0       
+[37] tools_3.6.1      lazyeval_0.2.2   crayon_1.3.4     whisker_0.3-2   
+[41] pkgconfig_2.0.2  zeallot_0.1.0    xml2_1.2.2       lubridate_1.7.4 
+[45] rstudioapi_0.10  assertthat_0.2.1 rmarkdown_1.15   httr_1.4.1      
+[49] R6_2.4.0         nlme_3.1-140     git2r_0.26.1     compiler_3.6.1  </code></pre>
 </div>
+</div>
+
 
 <!-- Adjust MathJax settings so that all math formulae are shown using
 TeX fonts only; see
@@ -615,14 +842,6 @@ footer is added to webpages before the MathJax javascript. -->
     "HTML-CSS": { availableFonts: ["TeX"] }
   });
 </script>
-
-<hr>
-<p>
-  This reproducible <a href="http://rmarkdown.rstudio.com">R Markdown</a>
-  analysis was created with
-  <a href="https://github.com/jdblischak/workflowr">workflowr</a> 1.1.1
-</p>
-<hr>
 
 
 </div>
@@ -641,6 +860,49 @@ $(document).ready(function () {
 });
 
 
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open')
+  });
+});
+</script>
+
+<!-- code folding -->
+
+<script>
+$(document).ready(function ()  {
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_').toLowerCase();
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = true;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
 </script>
 
 <!-- dynamically load mathjax for compatibility with self-contained -->
