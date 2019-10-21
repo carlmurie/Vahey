@@ -22,13 +22,8 @@ library(magrittr)
 vahey_eset <- readRDS(here("data", "gpl_eset.Rds"))
 ```
 
-#PCA
-
-PCA was conducted on the combination of three groups:  
+#PCA  
   
-* A: 36 subjects at T0 - before vaccination or challenge
-* B: 39 subjects at T5 - after vaccination and challenge
-* C: 12 subjects - InfectivityControls - no vaccination but challenged
 
 ```{r subset}
 pData(vahey_eset) %>%
@@ -53,8 +48,14 @@ tab <- countSampleSizes(pData(pca_eset), "parasitemia", "visit")
 headerKable(tab, label="visit", levels=2)
 ```
 
-##PCA  
+##PCA    
   
+PCA was conducted on the combination of three groups:  
+  
+* A: 36 subjects at T0 - before vaccination or challenge
+* B: 39 subjects at T5 - after vaccination and challenge
+* C: 12 subjects - InfectivityControls - no vaccination but challenged
+
 ```{r pca}
 pca <- prcomp(t(exprs(pca_eset)), center=FALSE, scale=FALSE)
 rot <- data.frame(pca$x, group=pca_eset$group)
@@ -67,3 +68,76 @@ gg_pca <- ggplot(rot, aes(x=PC1, y=PC2, color=group)) +
   
 print(gg_pca)
 ```
+
+#PCA: T4 parasitemia
+
+```{r}
+pData(vahey_eset) %>%
+  filter(visit=="T4") %>%
+  filter(parasitemia == "Protected" | 
+         parasitemia == "NonProtected" |
+         parasitemia == "Delay") %$%
+  geo_id ->
+  sample_index
+
+pca_eset <- vahey_eset[,sample_index] 
+pData(pca_eset) %>%
+  mutate(group=plyr::mapvalues(pca_eset$visit, from=c("T0", "T5", NA), 
+                               to=c("A", "B", "C"))) ->
+  pData(pca_eset)
+
+```
+
+```{r subset2}
+tab <- countSampleSizes(pData(pca_eset), "visit", "parasitemia")
+headerKable(tab, label="parasitemia", levels=3)
+```
+
+
+```{r pca2}
+pca <- prcomp(t(exprs(pca_eset)), center=FALSE, scale=FALSE)
+rot <- data.frame(pca$x, parasitemia=pca_eset$parasitemia)
+gg_pca <- ggplot(rot, aes(x=PC1, y=PC2, color=parasitemia)) + 
+  geom_point(shape=16, size=1) +
+  labs(x="PC1") +
+  labs(y="PC2") + 
+  ggtitle("T4: parasitemia") + 
+  labs(color="parsitemia")
+  
+print(gg_pca)
+```
+
+#PCA: T4 disease including controls
+
+
+```{r subset3}
+pData(vahey_eset) %>%
+  filter(visit=="T4" | is.na(visit)) %>%
+  filter(disease == "Protected" | 
+         disease == "NonProtected" |
+         disease == "InfectivityControl") %$%
+  geo_id ->
+  sample_index
+
+pca_eset <- vahey_eset[,sample_index] 
+```
+
+```{r sample3}
+tab <- countSampleSizes(pData(pca_eset), "disease", "visit")
+headerKable(tab)
+```
+
+
+```{r pca3}
+pca <- prcomp(t(exprs(pca_eset)), center=FALSE, scale=FALSE)
+rot <- data.frame(pca$x, disease=pca_eset$disease)
+gg_pca <- ggplot(rot, aes(x=PC1, y=PC2, color=disease)) + 
+  geom_point(shape=16, size=1) +
+  labs(x="PC1") +
+  labs(y="PC2") + 
+  ggtitle("T4: disease") + 
+  labs(color="disease")
+  
+print(gg_pca)
+```
+

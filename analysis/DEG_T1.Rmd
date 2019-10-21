@@ -1,0 +1,183 @@
+---
+title: DEG analysis - T1 vs all later time periods
+subtitle: time effect
+author: Carl Murie
+date: '`r format(Sys.Date(), "%B %d, %Y")`'
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+    number_sections: true
+---
+
+```{r load-packages, echo=FALSE, warning=FALSE, message=FALSE}
+library(knitr)
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message=FALSE)
+
+library(GSEABase)
+library(Biobase)
+library(tidyverse)
+library(data.table)
+library(here)
+library(RNASeqUtilities)
+library(gridExtra)
+library(limma)
+library(DT)
+library(magrittr)
+```
+
+```{r read}
+fdr_cut <- 0.05
+pval_cut <- 0.0001
+form <- "~visit"        ## formula used in limma
+
+vahey_eset <- readRDS(here("data", "gpl_eset.Rds"))
+```
+
+
+#Differentially Expressed Genes (DEG) Analysis
+
+  
+##T1 vs visits T2 to T5: time effect  
+  
+* **visit**
+    + T0 - study entry (baseline)
+    + T1 - day of third vaccination
+    + T2 - 24h after T1
+    + T3 - 72h after T1
+    + T4 - 2 weeks after T1
+    + T5 - 5 days after challenge  
+  
+A FDR cutoff of <= `r fdr_cut` was used.  
+  
+The formula used in the limma function is: `r form`  
+  
+```{r gsea1}
+
+## filter data for relevant time points and disease status
+
+pData(vahey_eset) %>% 
+  filter(!is.na(visit)) %>%           ## remove controls
+  filter(visit != "T0") %>%
+  filter(disease != "Unknown") %$%    ## remove Unknown subjects - no samples for T0 or T5
+    geo_id ->
+  sample_index
+
+deg_eset <- vahey_eset[,sample_index]
+```
+
+##Sample size  
+  
+```{r sample_size}
+tab <- countSampleSizes(pData(deg_eset), "visit", "disease")
+headerKable(tab, labels="disease", levels=2)
+```
+  
+##Comparisons  {.tabset .tabset-fade .tabset-pills}  
+  
+```{r model}
+
+##Fit entire model
+design1 <- model.matrix(formula(form), data=pData(deg_eset))
+v1 <- voom(exprs(deg_eset), design=design1)
+dupCor <- duplicateCorrelation(v1, design=design1,
+                               block=deg_eset$pid)$consensus.correlation
+fit1 <- lmFit(v1, design1, block=deg_eset$pid, correlation=dupCor)
+eb_fit1 <- eBayes(fit1)
+
+```
+  
+
+###T1 versus T2 (T2 - T1)  
+  
+
+```{r T1vsT2}
+
+fit1_t <- topTable(eb_fit1, number=Inf, coef="visitT2", sort.by="P")
+num_sig <- sum(fit1_t$adj.P.Val <= fdr_cut)
+
+graphs <- createDEGGraphs(fit1_t, title="T2 - T1", fdrCut=fdr_cut)
+grid.arrange(grobs=graphs, nrow=1)
+
+fit1_t %>% 
+  as.tibble(rownames="gene") %>%
+  filter(adj.P.Val < fdr_cut) %>% 
+  select(-t, -B) %>%
+  rename(FDR=adj.P.Val) %>%
+  datatable() %>% 
+  formatRound(columns = 2:5, digits = 4)
+
+```
+  
+###T1 versus T3 (T3 - T1)  
+  
+
+```{r T1vsT3}
+
+fit1_t <- topTable(eb_fit1, number=Inf, coef="visitT3", sort.by="P")
+num_sig <- c(num_sig, sum(fit1_t$adj.P.Val <= fdr_cut))
+
+graphs <- createDEGGraphs(fit1_t, title="T3 - T1", fdrCut=fdr_cut)
+grid.arrange(grobs=graphs, nrow=1)
+
+fit1_t %>% 
+  as.tibble(rownames="gene") %>%
+  filter(adj.P.Val < fdr_cut) %>% 
+  select(-t, -B) %>%
+  rename(FDR=adj.P.Val) %>%
+  datatable() %>% 
+  formatRound(columns = 2:5, digits = 4)
+
+```
+
+###T1 versus T4 (T4 - T1)    
+  
+
+```{r T1vsT4}
+
+fit1_t <- topTable(eb_fit1, number=Inf, coef="visitT4", sort.by="P")
+num_sig <- c(num_sig, sum(fit1_t$adj.P.Val <= fdr_cut))
+
+graphs <- createDEGGraphs(fit1_t, title="T4 - T1", fdrCut=fdr_cut)
+grid.arrange(grobs=graphs, nrow=1)
+
+fit1_t %>% 
+  as.tibble(rownames="gene") %>%
+  filter(adj.P.Val < fdr_cut) %>% 
+  select(-t, -B) %>%
+  rename(FDR=adj.P.Val) %>%
+  datatable() %>% 
+  formatRound(columns = 2:5, digits = 4)
+
+```
+
+###T1 versus T5 (T5 - T1)  
+  
+There is a confound between visits T5 and the other visit times. The T5 visit used the HGU133 Plus 2.0 chip while the other visits used the HGU133A 2.0 chip. Boxplots of normalized scores and MDS plots show a clear separation between the samples for the two chips (see Quality Control section).  
+  
+```{r T1vsT5}
+
+fit1_t <- topTable(eb_fit1, number=Inf, coef="visitT5", sort.by="P")
+num_sig <- c(num_sig, sum(fit1_t$adj.P.Val <= fdr_cut))
+
+graphs <- createDEGGraphs(fit1_t, title="T5 - T1", fdrCut=fdr_cut)
+grid.arrange(grobs=graphs, nrow=1)
+
+fit1_t %>% 
+  as.tibble(rownames="gene") %>%
+  filter(adj.P.Val < fdr_cut) %>% 
+  select(-t, -B) %>%
+  rename(FDR=adj.P.Val) %>%
+  datatable() %>% 
+  formatRound(columns = 2:5, digits = 4)
+
+```
+  
+##Summary  
+  
+  
+```{r summary}
+tibble(visit=sort(unique(deg_eset$visit))[-c(1)], "significant genes"=num_sig) %>%
+  headerKable()
+
+```

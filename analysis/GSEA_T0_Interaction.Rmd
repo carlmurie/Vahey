@@ -1,0 +1,313 @@
+---
+title: GSEA analysis - baseline (T0) vs all other time periods
+subtitle:  interaction effect between visit and disease status
+author: Carl Murie
+date: '`r format(Sys.Date(), "%B %d, %Y")`'
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+    number_sections: true
+---
+
+```{r load-packages, echo=FALSE, warning=FALSE, message=FALSE}
+library(knitr)
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message=FALSE)
+
+library(GSEABase)
+library(Biobase)
+library(tidyverse)
+library(data.table)
+library(here)
+library(RNASeqUtilities)
+library(limma)
+library(DT)
+library(magrittr)
+library(heatmap3)
+```
+
+```{r read}
+fdr_cut <- 0.2
+min_gene_set <- 5
+form <- "~visit*disease"        ## formula used in camera
+
+vahey_eset <- readRDS(here("data", "gpl_eset.Rds"))
+
+all_res <- NULL  ## store significant gene-sets across comparisons for heatmap
+```
+
+```{r gsea_setup}
+## set up GSEA analysis
+btm_gtm <- getGmt(here("data/BTM_for_GSEA_20131008.gmt"))
+btm_ind <- ids2indices(geneIds(btm_gtm), rownames(vahey_eset))
+btm_ind <- btm_ind[sapply(btm_ind, length) > min_gene_set]
+```
+
+#GSEA Analysis
+
+The Blood Transcript Modules (BTM) from Shuzhao et al. Molecular signatures of antibody responses derived from a systems biological study of 5 human vaccines, 2014 were used for the GSEA analysis.
+  
+##baseline (T0) vs visits T1 to T5: time vs disease interaction effect  
+  
+* **visit**
+    + T0 - study entry (baseline)
+    + T1 - day of third vaccination
+    + T2 - 24h after T1
+    + T3 - 72h after T1
+    + T4 - 2 weeks after T1
+    + T5 - 5 days after challenge  
+  
+* **disease** - response to malaria challenge
+    + Protected - vaccinated and protected from challenge  
+    + NonProtected - vaccinated and not protected from challenge  
+
+A FDR cutoff of <= `r fdr_cut` was used.  
+  
+The formula used in the camera function is: `r form`  
+  
+```{r gsea1}
+
+## filter data for relevant time points and disease status
+
+pData(vahey_eset) %>% 
+  filter(!is.na(visit)) %>%           ## remove controls
+  filter(disease != "Unknown") %$%
+    geo_id ->
+  sample_index
+
+gsea_eset <- vahey_eset[,sample_index] 
+pData(gsea_eset) %>%
+  mutate(disease=factor(disease, levels=c("Protected", "NonProtected"))) %>%
+  set_rownames(pData(gsea_eset)$geo_id) ->
+  pData(gsea_eset)
+```
+
+##Sample size  {.tabset .tabset-fade .tabset-pills}   
+  
+```{r sample_size}
+tab <- countSampleSizes(pData(gsea_eset), "visit", "disease")
+headerKable(tab, labels="disease", levels=2)
+```
+  
+## Comparisons {.tabset .tabset-fade .tabset-pills}   
+  
+###T0 versus T1 (T1 - T0)  
+  
+
+```{r T0vsT1}
+
+## get subset
+pData(gsea_eset) %>% 
+  filter(visit == "T0" | visit == "T1") %$%     
+    geo_id ->
+  visit_index
+
+gsea_sub <- gsea_eset[,visit_index]
+
+pData(gsea_sub) %>%
+  mutate(visit=factor(visit, levels=c("T0", "T1"))) ->
+  pData(gsea_sub)
+
+design1 <- model.matrix(formula(form), 
+                        data=pData(gsea_sub))
+v1 <- voom(exprs(gsea_sub), 
+           design=design1)
+btm_camera <- as_tibble(camera(v1, 
+                               btm_ind, 
+                               design1, 
+                               contrast="visitT1:diseaseNonProtected"),
+                        rownames="geneset")
+num_sig <- sum(btm_camera$FDR <= fdr_cut)
+
+btm_camera %>% 
+  mutate(time = "T1") ->
+all_res
+
+btm_camera %>% 
+  filter(FDR < fdr_cut) %>% 
+  datatable() %>% 
+  formatRound(columns = c("PValue", "FDR"), digits = 4)
+```
+
+###T0 versus T2 (T2 - T0)  
+  
+
+```{r T0vsT2}
+
+## get subset
+pData(gsea_eset) %>% 
+  filter(visit == "T0" | visit == "T2") %$%         
+    geo_id ->
+  visit_index
+
+gsea_sub <- gsea_eset[,visit_index]
+
+pData(gsea_sub) %>%
+  mutate(visit=factor(visit, levels=c("T0", "T2"))) ->
+  pData(gsea_sub)
+
+design1 <- model.matrix(formula(form), data=pData(gsea_sub))
+v1 <- voom(exprs(gsea_sub), design=design1)
+btm_camera <- as_tibble(camera(v1, btm_ind, design1, 
+                               contrast="visitT2:diseaseNonProtected"), rownames="geneset")
+num_sig <- c(num_sig, sum(btm_camera$FDR <= fdr_cut))
+
+btm_camera %>% 
+  mutate(time = "T2") %>%
+rbind(all_res) ->
+  all_res
+
+btm_camera %>% 
+  filter(FDR < fdr_cut) %>% 
+  datatable() %>% 
+  formatRound(columns = c("PValue", "FDR"), digits = 4)
+```
+  
+###T0 versus T3 (T3 - T0)  
+  
+
+```{r T0vsT3}
+
+## get subset
+pData(gsea_eset) %>% 
+  filter(visit == "T0" | visit == "T3") %$%         
+    geo_id ->
+  visit_index
+
+gsea_sub <- gsea_eset[,visit_index]
+
+pData(gsea_sub) %>%
+  mutate(visit=factor(visit, levels=c("T0", "T3"))) ->
+  pData(gsea_sub)
+
+design1 <- model.matrix(formula(form), data=pData(gsea_sub))
+v1 <- voom(exprs(gsea_sub), design=design1)
+btm_camera <- as_tibble(camera(v1, btm_ind, design1, 
+                               contrast="visitT3:diseaseNonProtected"), rownames="geneset")
+num_sig <- c(num_sig, sum(btm_camera$FDR <= fdr_cut))
+
+btm_camera %>% 
+  mutate(time = "T3") %>%
+rbind(all_res) ->
+  all_res
+
+btm_camera %>% 
+  filter(FDR < fdr_cut) %>% 
+  datatable() %>% 
+  formatRound(columns = c("PValue", "FDR"), digits = 4)
+```
+
+###T0 versus T4 (T4 - T0)  
+  
+
+```{r T0vsT4}
+
+## get subset
+pData(gsea_eset) %>% 
+  filter(visit == "T0" | visit == "T4") %$%         
+    geo_id ->
+  visit_index
+
+gsea_sub <- gsea_eset[,visit_index]
+
+pData(gsea_sub) %>%
+  mutate(visit=factor(visit, levels=c("T0", "T4"))) ->
+  pData(gsea_sub)
+
+design1 <- model.matrix(formula(form), data=pData(gsea_sub))
+v1 <- voom(exprs(gsea_sub), design=design1)
+btm_camera <- as_tibble(camera(v1, btm_ind, design1, 
+                               contrast="visitT4:diseaseNonProtected"), rownames="geneset")
+num_sig <- c(num_sig, sum(btm_camera$FDR <= fdr_cut))
+
+btm_camera %>% 
+  mutate(time = "T4") %>%
+rbind(all_res) ->
+  all_res
+
+btm_camera %>% 
+  filter(FDR < fdr_cut) %>% 
+  datatable() %>% 
+  formatRound(columns = c("PValue", "FDR"), digits = 4)
+```
+
+###T0 versus T5 (T5 - T0)  
+  
+There is a confound between visits T5 and the other visit times. The T5 visit used the HGU133A 2.0 chip while the other visits used the HGU133 Plus 2.0 chip. Boxplots of normalized scores and MDS plots show a clear separation between the samples for the two chips (see Quality Control section).  
+  
+```{r T0vsT5}
+
+## get subset
+pData(gsea_eset) %>% 
+  filter(visit == "T0" | visit == "T5") %$%         
+    geo_id ->
+  visit_index
+
+gsea_sub <- gsea_eset[,visit_index]
+
+pData(gsea_sub) %>%
+  mutate(visit=factor(visit, levels=c("T0", "T5"))) ->
+  pData(gsea_sub)
+
+design1 <- model.matrix(formula(form), data=pData(gsea_sub))
+v1 <- voom(exprs(gsea_sub), design=design1)
+btm_camera <- as_tibble(camera(v1, btm_ind, design1, 
+                               contrast="visitT5:diseaseNonProtected"), rownames="geneset")
+num_sig <- c(num_sig, sum(btm_camera$FDR <= fdr_cut))
+
+btm_camera %>% 
+  filter(FDR < fdr_cut) %>% 
+  datatable() %>% 
+  formatRound(columns = c("PValue", "FDR"), digits = 4)
+```
+  
+  
+#Heatmap of significant gene-sets
+
+```{r heat_params}
+new_fdr <- 0.01
+```
+
+FDR cutoff <= `r new_fdr`  
+  
+```{r heatmap}
+
+all_res %>% 
+  filter(FDR < new_fdr) %$%
+  geneset ->
+  sigs
+
+all_res %>%
+  filter(geneset %in% sigs) %>%
+  mutate(sign = as.numeric(plyr::mapvalues(Direction, 
+                                           from=c("Up", "Down"), 
+                                           to=c(1, -1)))) %>%
+  mutate(FDR_sign = -log10(FDR)*sign) ->
+  genies
+  
+dcast(genies, geneset~time, value.var="FDR_sign") %>%
+  as.tibble() %>%
+  column_to_rownames("geneset") %>%
+  as.matrix() ->
+  heat_mat
+
+heatmap3(heat_mat, Rowv=TRUE, Colv=NA, scale="none", balanceColor=TRUE, 
+         cexRow=0.65 ,showRowDendro=FALSE, 
+         col=colorRampPalette(c("firebrick3", "white", "navy"))(1024))
+
+genies %>%
+  arrange(FDR) %>%
+  select(-c(sign, FDR_sign)) %>%
+  head(30) %>%
+  headerKable()
+  
+```
+  
+  
+##Summary  
+  
+```{r summary}
+tibble(visit=sort(unique(gsea_eset$visit))[-1], "significant genesets"=num_sig) %>%
+  headerKable()
+
+```

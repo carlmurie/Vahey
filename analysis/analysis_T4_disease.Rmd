@@ -1,0 +1,79 @@
+---
+title: "GSEA T4 disease"
+author: Carl Murie
+date: '`r format(Sys.Date(), "%B %d, %Y")`'
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+    number_sections: true
+---
+
+```{r load-packages, echo=FALSE, warning=FALSE, message=FALSE}
+library(knitr)
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message=FALSE)
+
+library(GSEABase)
+library(Biobase)
+library(tidyverse)
+library(data.table)
+library(here)
+library(RNASeqUtilities)
+library(limma)
+library(DT)
+library(magrittr)
+```
+
+```{r read}
+fdr_cut <- 0.2
+min_gene_set <- 5
+form <- "~disease"        ## formula used in camera
+
+vahey_eset <- readRDS(here("data", "gpl_eset.Rds"))
+```
+
+```{r gsea_setup}
+## set up GSEA analysis
+btm_gtm <- getGmt(here("data/BTM_for_GSEA_20131008.gmt"))
+btm_ind <- ids2indices(geneIds(btm_gtm), rownames(vahey_eset))
+btm_ind <- btm_ind[sapply(btm_ind, length) > min_gene_set]
+```
+
+#GSEA analysis
+
+A FDR cutoff of <= `r fdr_cut` was used.  
+  
+The formula used in the camera function is: `r form`  
+  
+```{r gsea1}
+
+## filter data for relevant time points and disease status
+
+pData(vahey_eset) %>% 
+  filter(visit == "T4") %$% 
+    geo_id ->
+  sample_index
+
+gsea_sub <- vahey_eset[,sample_index]
+```
+
+##Sample size
+
+```{r sample_size}
+tab <- countSampleSizes(pData(gsea_sub), "visit", "disease")
+headerKable(tab, labels="disease", levels=2)
+```
+ 
+ 
+```{r}  
+design1 <- model.matrix(formula(form), data=pData(gsea_sub))
+v1 <- voom(exprs(gsea_sub), design=design1)
+btm_camera <- as_tibble(camera(v1, btm_ind, design1, 
+                               contrast="diseaseProtected"), rownames="geneset")
+num_sig <- sum(btm_camera$FDR <= fdr_cut)
+
+btm_camera %>% 
+  filter(FDR < fdr_cut) %>% 
+  datatable() %>% 
+  formatRound(columns = c("PValue", "FDR"), digits = 4)
+```

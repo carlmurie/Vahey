@@ -1,0 +1,131 @@
+---
+title: GSEA analysis - T5 disease status
+author: Carl Murie
+date: '`r format(Sys.Date(), "%B %d, %Y")`'
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+    number_sections: true
+---
+
+```{r load-packages, echo=FALSE, warning=FALSE, message=FALSE}
+library(knitr)
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message=FALSE)
+
+library(GSEABase)
+library(Biobase)
+library(tidyverse)
+library(data.table)
+library(here)
+library(RNASeqUtilities)
+library(limma)
+library(DT)
+library(magrittr)
+```
+
+```{r read}
+fdr_cut <- 0.2
+min_gene_set <- 5
+form <- "~visit*disease"        ## formula used in camera
+
+vahey_eset <- readRDS(here("data", "gpl_eset.Rds"))
+mal_dis_both <- read_csv(here("output", "dmso_M3_both_disease.csv"))
+mal_dis_young <- read_csv(here("output", "dmso_M3_young_disease.csv"))
+mal_dis_old <- read_csv(here("output", "dmso_M3_old_disease.csv"))
+```
+
+```{r gsea_setup}
+## set up GSEA analysis
+btm_gtm <- getGmt(here("data/BTM_for_GSEA_20131008.gmt"))
+btm_ind <- ids2indices(geneIds(btm_gtm), rownames(vahey_eset))
+btm_ind <- btm_ind[sapply(btm_ind, length) > min_gene_set]
+```
+
+#Analysis
+
+The Blood Transcript Modules (BTM) from Shuzhao et al. Molecular signatures of antibody responses derived from a systems biological study of 5 human vaccines, 2014 were used for the GSEA analysis.
+
+Apply camera to samples in T5 to test for differentially expressed gene-sets for Protection - NonProtection.
+
+```{r filter}
+
+pData(vahey_eset) %>%
+ filter(visit == "T5") %$%
+    geo_id ->
+  sample_index
+
+gsea_eset <- vahey_eset[,sample_index]
+pData(gsea_eset) %>%
+  mutate(disease = factor(disease)) ->
+  pData(gsea_eset)
+```
+
+#Sample sizes  
+
+```{r samples}
+countSampleSizes(pData(gsea_eset), "visit", c("disease")) %>%
+  headerKable("disease", 2)
+
+```
+
+#T5: disease protection (Protected - NonProtected)
+  
+
+```{r parameters}
+form <- "~disease"
+```
+  
+linear model: `r form`
+filtering: T5
+
+```{r voom}
+
+design1 <- model.matrix(formula(form), data=pData(gsea_eset))
+v1 <- voom(exprs(gsea_eset), design=design1)
+btm_camera <- as_tibble(camera(v1, btm_ind, design1, 
+                               contrast="diseaseProtected"), rownames="geneset")
+num_sig <- sum(btm_camera$FDR <= fdr_cut)
+
+btm_camera %>% 
+  filter(FDR < fdr_cut) %>% 
+  datatable() %>% 
+  formatRound(columns = c("PValue", "FDR"), digits = 4)
+
+```
+
+#Compare significant gene-sets to mal067 assay for M3, DMSO disease effects.  
+
+Overlapping gene-sets between Vahey significant gene-sets and mal067 significant gene-sets. FDR cutoff <= `r fdr_cut`
+  
+```{r compare}
+
+btm_camera %>%
+  filter(FDR <= fdr_cut) ->
+  vah_sig
+
+mal_dis_both %>%
+  filter(FDR <= fdr_cut) ->
+  mal_sig_both
+
+mal_dis_young %>%
+  filter(FDR <= fdr_cut) ->
+  mal_sig_young
+
+mal_dis_old %>%
+  filter(FDR <= fdr_cut) ->
+  mal_sig_old
+
+intersect(vah_sig$geneset, mal_sig_both$geneset) %>%
+  enframe() %>%
+  headerKable(title="both")
+
+intersect(vah_sig$geneset, mal_sig_young$geneset) %>%
+  enframe() %>%
+  headerKable(title="young")
+
+intersect(vah_sig$geneset, mal_sig_old$geneset) %>%
+  enframe() %>%
+  headerKable(title="old")
+
+```

@@ -1,0 +1,275 @@
+---
+title: DEG analysis - Protected vs Non-Protected
+author: Carl Murie
+date: '`r format(Sys.Date(), "%B %d, %Y")`'
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+    number_sections: true
+---
+
+```{r load-packages, echo=FALSE, warning=FALSE, message=FALSE}
+library(knitr)
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message=FALSE)
+
+library(GSEABase)
+library(Biobase)
+library(tidyverse)
+library(data.table)
+library(here)
+library(RNASeqUtilities)
+library(gridExtra)
+library(limma)
+library(DT)
+library(magrittr)
+```
+
+```{r read}
+fdr_cut <- 0.05
+pval_cut <- 0.0001
+form <- "~disease"        ## formula used in limma
+coef <- "diseaseNonProtected"
+vahey_eset <- readRDS(here("data", "gpl_eset.Rds"))
+```
+
+#Differentially Expressed Genes (DEG) Analysis  
+  
+##Design
+  
+* **visit**
+    + T0 - study entry (baseline)
+    + T1 - day of third vaccination
+    + T2 - 24h after T1
+    + T3 - 72h after T1
+    + T4 - 2 weeks after T1
+    + T5 - 5 days after challenge  
+  
+A FDR cutoff of <= `r fdr_cut` was used.  
+  
+The formula used in the limma function is: `r form`  
+ 
+```{r gsea1}
+
+## filter data for relevant time points and disease status
+
+pData(vahey_eset) %>% 
+  filter(!is.na(visit)) %>%           ## remove controls
+  filter(disease != "Unknown") %$%
+    geo_id ->
+  sample_index
+
+gsea_eset <- vahey_eset[,sample_index] 
+pData(gsea_eset) %>%
+  mutate(disease=factor(disease, levels=c("Protected", "NonProtected"))) %>%
+  set_rownames(pData(gsea_eset)$geo_id) ->
+  pData(gsea_eset)
+deg_eset <- gsea_eset
+```
+
+##Sample size  {.tabset .tabset-fade .tabset-pills}   
+  
+```{r sample_size}
+tab <- countSampleSizes(pData(deg_eset), "visit", "disease")
+headerKable(tab, labels="disease", levels=2)
+```
+  
+##Comparisons  {.tabset .tabset-fade .tabset-pills}  
+  
+###T0 
+  
+```{r T0vsT1}
+## get subset
+pData(deg_eset) %>% 
+  filter(visit == "T0") %$%     
+    geo_id ->
+  visit_index
+
+deg_sub <- deg_eset[,visit_index]
+
+design1 <- model.matrix(formula(form), data=pData(deg_sub))
+v1 <- voom(exprs(deg_sub), design=design1)
+fit1 <- lmFit(v1, design1)
+eb_fit1 <- eBayes(fit1)
+fit1_t <- topTable(eb_fit1, number=Inf, coef=coef, sort.by="P")
+num_sig <- sum(fit1_t$adj.P.Val <= fdr_cut)
+
+graphs <- createDEGGraphs(fit1_t, title="T0", fdrCut=fdr_cut)
+grid.arrange(grobs=graphs, nrow=1)
+
+fit1_t %>% 
+  as.tibble(rownames="gene") %>%
+  filter(adj.P.Val < fdr_cut) %>% 
+  select(-t, -B) %>%
+  rename(FDR=adj.P.Val) %>%
+  datatable() %>% 
+  formatRound(columns = 2:5, digits = 4)
+
+```
+
+  
+###T1 
+  
+```{r T1}
+## get subset
+pData(deg_eset) %>% 
+  filter(visit == "T1") %$%     
+    geo_id ->
+  visit_index
+
+deg_sub <- deg_eset[,visit_index]
+
+design1 <- model.matrix(formula(form), data=pData(deg_sub))
+v1 <- voom(exprs(deg_sub), design=design1)
+fit1 <- lmFit(v1, design1)
+eb_fit1 <- eBayes(fit1)
+fit1_t <- topTable(eb_fit1, number=Inf, coef=coef, sort.by="P")
+num_sig <- c(num_sig, sum(fit1_t$FDR <= fdr_cut))
+
+graphs <- createDEGGraphs(fit1_t, title="T1", fdrCut=fdr_cut)
+grid.arrange(grobs=graphs, nrow=1)
+
+fit1_t %>% 
+  as.tibble(rownames="gene") %>%
+  filter(adj.P.Val < fdr_cut) %>% 
+  select(-t, -B) %>%
+  rename(FDR=adj.P.Val) %>%
+  datatable() %>% 
+  formatRound(columns = 2:5, digits = 4)
+
+```
+  
+###T2 
+  
+```{r T2}
+## get subset
+pData(deg_eset) %>% 
+  filter(visit == "T2") %$%     
+    geo_id ->
+  visit_index
+
+deg_sub <- deg_eset[,visit_index]
+
+design1 <- model.matrix(formula(form), data=pData(deg_sub))
+v1 <- voom(exprs(deg_sub), design=design1)
+fit1 <- lmFit(v1, design1)
+eb_fit1 <- eBayes(fit1)
+fit1_t <- topTable(eb_fit1, number=Inf, coef=coef, sort.by="P")
+num_sig <- c(num_sig, sum(fit1_t$FDR <= fdr_cut))
+
+graphs <- createDEGGraphs(fit1_t, title="T2", fdrCut=fdr_cut)
+grid.arrange(grobs=graphs, nrow=1)
+
+fit1_t %>% 
+  as.tibble(rownames="gene") %>%
+  filter(adj.P.Val < fdr_cut) %>% 
+  select(-t, -B) %>%
+  rename(FDR=adj.P.Val) %>%
+  datatable() %>% 
+  formatRound(columns = 2:5, digits = 4)
+
+```
+  
+###T3 
+  
+```{r T3}
+## get subset
+pData(deg_eset) %>% 
+  filter(visit == "T3") %$%     
+    geo_id ->
+  visit_index
+
+deg_sub <- deg_eset[,visit_index]
+
+design1 <- model.matrix(formula(form), data=pData(deg_sub))
+v1 <- voom(exprs(deg_sub), design=design1)
+fit1 <- lmFit(v1, design1)
+eb_fit1 <- eBayes(fit1)
+fit1_t <- topTable(eb_fit1, number=Inf, coef=coef, sort.by="P")
+num_sig <- c(num_sig, sum(fit1_t$FDR <= fdr_cut))
+
+graphs <- createDEGGraphs(fit1_t, title="T3", fdrCut=fdr_cut)
+grid.arrange(grobs=graphs, nrow=1)
+
+fit1_t %>% 
+  as.tibble(rownames="gene") %>%
+  filter(adj.P.Val < fdr_cut) %>% 
+  select(-t, -B) %>%
+  rename(FDR=adj.P.Val) %>%
+  datatable() %>% 
+  formatRound(columns = 2:5, digits = 4)
+
+```
+  
+  
+###T4 
+  
+```{r T4}
+## get subset
+pData(deg_eset) %>% 
+  filter(visit == "T4") %$%     
+    geo_id ->
+  visit_index
+
+deg_sub <- deg_eset[,visit_index]
+
+design1 <- model.matrix(formula(form), data=pData(deg_sub))
+v1 <- voom(exprs(deg_sub), design=design1)
+fit1 <- lmFit(v1, design1)
+eb_fit1 <- eBayes(fit1)
+fit1_t <- topTable(eb_fit1, number=Inf, coef=coef, sort.by="P")
+num_sig <- c(num_sig, sum(fit1_t$FDR <= fdr_cut))
+
+graphs <- createDEGGraphs(fit1_t, title="T4", fdrCut=fdr_cut)
+grid.arrange(grobs=graphs, nrow=1)
+
+fit1_t %>% 
+  as.tibble(rownames="gene") %>%
+  filter(adj.P.Val < fdr_cut) %>% 
+  select(-t, -B) %>%
+  rename(FDR=adj.P.Val) %>%
+  datatable() %>% 
+  formatRound(columns = 2:5, digits = 4)
+
+```
+
+
+###T5 
+  
+```{r T5}
+## get subset
+pData(deg_eset) %>% 
+  filter(visit == "T5") %$%     
+    geo_id ->
+  visit_index
+
+deg_sub <- deg_eset[,visit_index]
+
+design1 <- model.matrix(formula(form), data=pData(deg_sub))
+v1 <- voom(exprs(deg_sub), design=design1)
+fit1 <- lmFit(v1, design1)
+eb_fit1 <- eBayes(fit1)
+fit1_t <- topTable(eb_fit1, number=Inf, coef=coef, sort.by="P")
+num_sig <- c(num_sig, sum(fit1_t$FDR <= fdr_cut))
+
+graphs <- createDEGGraphs(fit1_t, title="T5", fdrCut=fdr_cut)
+grid.arrange(grobs=graphs, nrow=1)
+
+fit1_t %>% 
+  as.tibble(rownames="gene") %>%
+  filter(adj.P.Val < fdr_cut) %>% 
+  select(-t, -B) %>%
+  rename(FDR=adj.P.Val) %>%
+  datatable() %>% 
+  formatRound(columns = 2:5, digits = 4)
+
+```
+
+##Summary  
+  
+  
+```{r summary}
+tibble(visit=sort(unique(deg_eset$visit)), "significant genes"=num_sig) %>%
+  headerKable()
+
+```

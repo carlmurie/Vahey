@@ -1,0 +1,113 @@
+---
+title: "Monocyte Lymphocyte ratio prediction for disease"
+subtitle: "CiberSort"
+author: "Carl Murie"
+date: '`r format(Sys.Date(), "%B %d, %Y")`'
+output: html_document
+---
+
+```{r load-packages, echo=FALSE, warning=FALSE, message=FALSE}
+library(knitr)
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message=FALSE)
+
+library(Biobase)
+library(tidyverse)
+library(data.table)
+library(here)
+library(RNASeqUtilities)
+library(DT)
+library(magrittr)
+library(survival)   ## clogit
+```
+
+```{r data}
+vah_eset <- readRDS(here("data/gpl_eset.Rds"))
+ciber <- read_csv(here("data/vahey_ciber_cells.csv"))
+```
+
+#Test monocyte/lymphocyte (ML) ratios for disease prediction  
+  
+```{r ciber}
+
+## extract lymphocyte cell names
+lymph_names <- colnames(ciber)[str_detect(colnames(ciber), 
+                                          "T cells|B cells|NK cells|Plasma cells")]
+
+## extract non-lymphocyte cell names
+not_lymph_names <- colnames(ciber)[!str_detect(colnames(ciber), 
+                                          "T cells|B cells|NK cells|Plasma cells")]
+not_lymph_names <- not_lymph_names[-c(1:2,12:14)]
+not_lymph_names <- c(not_lymph_names, c("", "", ""))
+
+## calculate monocyte/lymphcyte ratios
+ciber %<>%
+  mutate(Lymphocytes= apply(ciber[,lymph_names], 1, sum)) %<>%
+  mutate(ml_ratio=Monocytes/Lymphocytes)
+
+## join with data
+pData(vah_eset) %>% 
+  filter(disease=="Protected" | disease == "NonProtected") %>%
+  select(-c("description", "parasitemia", "pid", "chip")) %>%
+  dplyr::left_join(ciber[,c("Input Sample", "ml_ratio", "Monocytes")], 
+                   by=c("geo_id"="Input Sample")) ->
+  dat
+
+```
+
+The CiberSort deconvolution method was applied to the Vahey microarray data to produce monocyte/lymphocyte ratios. CiberSort produces an estimate of Monocyte proportion and a number of Lymphocyte cell subset proportions.  
+  
+The following lymphocyte subsets were summed to calculate the lymphocyte proportion:  
+  
+```{r names}
+outie <- cbind(lymph_names, not_lymph_names)
+colnames(outie) <- c("Lymphocytes", "not Lymphocytes")
+headerKable(outie)
+```
+  
+The monocyte/lymphocyte ratio was calculated by dividing the monocyte proportion by the lymphocyte proportion.  
+  
+##Sample Sizes  
+  
+```{r samples} 
+countSampleSizes(dat, "visit", "disease") %>%
+  headerKable(labels="disease", levels=2)
+```
+
+##Plot ML ratios against disease  
+  
+```{r plot}
+ggplot(dat, aes(x=disease, y=ml_ratio, color=disease)) + geom_boxplot() + 
+  facet_wrap(~visit)
+```
+
+##Test ML ratios for disease prediction  
+  
+clogit regression will be applied with the following formula:  
+  
+disease ~ ml_ratio   
+  
+```{r clogit}
+
+## convert disease to binary clogit variable
+dat %<>%
+ mutate(dis_logit:=as.numeric(plyr::mapvalues(as.character(disease),
+                                          from=c("Protected","NonProtected"), 
+                                          to=c(0,1)))) %<>%
+  data.table()
+
+## execute test
+logit_pvals <- dat[,summary(clogit(dis_logit~ml_ratio))$coefficients["ml_ratio", 5], by=visit]
+
+colnames(logit_pvals)[2] <- "Pvalue"
+logit_pvals %>%
+  headerKable()
+```
+  
+  
+##Plot Monocyte populationss against disease  
+  
+```{r plot_mono}
+ggplot(dat, aes(x=disease, y=Monocytes, color=disease)) + 
+  geom_boxplot() + xlab("disease") + facet_wrap(~visit)
+```
+
