@@ -41,11 +41,11 @@ btm_ind <- ids2indices(geneIds(btm_gtm), rownames(vahey_eset))
 btm_ind <- btm_ind[sapply(btm_ind, length) > min_gene_set]
 ```
 
-#GSEA Analysis
+# GSEA Analysis
 
 The Blood Transcript Modules (BTM) from Shuzhao et al. Molecular signatures of antibody responses derived from a systems biological study of 5 human vaccines, 2014 were used for the GSEA analysis.
   
-##Day of vaccine (T1) vs visits T2 to T5: time effect  
+## Day of vaccine (T1) vs visits T2 to T5: time effect  
   
 * **visit**
     + T0 - study entry (baseline)
@@ -72,7 +72,7 @@ pData(vahey_eset) %>%
 gsea_eset <- vahey_eset[,sample_index]
 ```
 
-###Sample size  
+### Sample size  
   
 ```{r sample_size}
 tab <- countSampleSizes(pData(gsea_eset), "visit", "disease")
@@ -81,7 +81,7 @@ headerKable(tab, labels="disease", levels=2)
   
 ## Comparisons {.tabset .tabset-fade .tabset-pills}  
   
-###T1 versus T2 (T2 - T1)  
+### T1 versus T2 (T2 - T1)  
   
 
 ```{r T1vsT2}
@@ -111,11 +111,11 @@ all_res
 
 btm_camera %>% 
   filter(FDR < fdr_cut) %>% 
-  datatable() %>% 
-  formatRound(columns = c("PValue", "FDR"), digits = 4)
+  headerKable() %>%
+  kableExtra::scroll_box(height="300px")
 ```
 
-###T1 versus T3 (T3 - T1)  
+### T1 versus T3 (T3 - T1)  
   
 
 ```{r T1vsT3}
@@ -145,11 +145,11 @@ btm_camera %>%
 
 btm_camera %>% 
   filter(FDR < fdr_cut) %>% 
-  datatable() %>% 
-  formatRound(columns = c("PValue", "FDR"), digits = 4)
+  headerKable() %>%
+  kableExtra::scroll_box(height="300px")
 ```
   
-###T1 versus T4 (T4 - T1)  
+### T1 versus T4 (T4 - T1)  
   
 
 ```{r T1vsT4}
@@ -180,12 +180,12 @@ btm_camera %>%
 
 btm_camera %>% 
   filter(FDR < fdr_cut) %>% 
-  datatable() %>% 
-  formatRound(columns = c("PValue", "FDR"), digits = 4)
+  headerKable() %>%
+  kableExtra::scroll_box(height="300px")
 ```
 
 
-###T1 versus T5 (T5 - T1)  
+### T1 versus T5 (T5 - T1)  
   
 There is a confound between visits T5 and the other visit times. The T5 visit used the HGU133A 2.0 chip while the other visits used the HGU133 Plus 2.0 chip. Boxplots of normalized scores and MDS plots show a clear separation between the samples for the two chips (see Quality Control section).  
   
@@ -211,11 +211,11 @@ num_sig <- c(num_sig, sum(btm_camera$FDR <= fdr_cut))
 
 btm_camera %>% 
   filter(FDR < fdr_cut) %>% 
-  datatable() %>% 
-  formatRound(columns = c("PValue", "FDR"), digits = 4)
+  headerKable() %>%
+  kableExtra::scroll_box(height="300px")
 ```
   
-#Heatmap of significant gene-sets
+# Heatmap of significant gene-sets
 
 ```{r heat_params}
 new_fdr <- 0.00001
@@ -252,12 +252,13 @@ genies %>%
   arrange(FDR) %>%
   select(-c(sign, FDR_sign)) %>%
   head(30) %>%
-  headerKable()
+ headerKable() %>%
+  kableExtra::scroll_box(height="300px")
   
 ```
   
   
-##Summary  
+## Summary  
   
 ```{r summary}
 tibble(visit=sort(unique(gsea_eset$visit))[-c(1,2)], "significant genesets"=num_sig) %>%

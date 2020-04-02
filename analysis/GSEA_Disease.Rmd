@@ -5,13 +5,10 @@ date: "April 29, 2019"
 output: html_document
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
 
 ```{r load-packages, echo=FALSE, warning=FALSE, message=FALSE}
 library(knitr)
-knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message=FALSE)
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message=FALSE)
 
 library(GSEABase)
 library(Biobase)
@@ -44,11 +41,11 @@ btm_ind <- ids2indices(geneIds(btm_gtm), rownames(vahey_eset))
 btm_ind <- btm_ind[sapply(btm_ind, length) > min_gene_set]
 ```
 
-#GSEA Analysis
+# GSEA Analysis
 
 The Blood Transcript Modules (BTM) from Shuzhao et al. Molecular signatures of antibody responses derived from a systems biological study of 5 human vaccines, 2014 were used for the GSEA analysis.
   
-##Disease effect (NonProtected - Protected) for T0 to T5
+## Disease effect (NonProtected - Protected) for T0 to T5
   
 * **visit**
     + T0 - study entry (baseline)
@@ -84,7 +81,7 @@ pData(gsea_eset) %>%
   pData(gsea_eset)
 ```
 
-##Sample size  {.tabset .tabset-fade .tabset-pills}   
+## Sample size  {.tabset .tabset-fade .tabset-pills}   
   
 ```{r sample_size}
 tab <- countSampleSizes(pData(gsea_eset), "visit", "disease")
@@ -93,7 +90,7 @@ headerKable(tab, labels="disease", levels=2)
   
 ## Comparisons {.tabset .tabset-fade .tabset-pills}   
   
-###T0  
+### T0  
 
 ```{r T0vsT1}
 
@@ -122,11 +119,12 @@ all_res
 
 btm_camera %>% 
   filter(FDR < fdr_cut) %>% 
-  datatable() %>% 
-  formatRound(columns = c("PValue", "FDR"), digits = 4)
+  headerKable() %>%
+  kableExtra::scroll_box(height="300px")
+ 
 ```
 
-###T1  
+### T1  
 
 ```{r T1}
 
@@ -156,11 +154,11 @@ btm_camera %>%
 
 btm_camera %>% 
   filter(FDR < fdr_cut) %>% 
-  datatable() %>% 
-  formatRound(columns = c("PValue", "FDR"), digits = 4)
+  headerKable() %>%
+  kableExtra::scroll_box(height="300px")
 ```
 
-###T2  
+### T2  
 
 ```{r T2}
 
@@ -191,11 +189,11 @@ btm_camera %>%
 
 btm_camera %>% 
   filter(FDR < fdr_cut) %>% 
-  datatable() %>% 
-  formatRound(columns = c("PValue", "FDR"), digits = 4)
+  headerKable() %>%
+  kableExtra::scroll_box(height="300px")
 ```
 
-###T3  
+### T3  
 
 ```{r T3}
 
@@ -226,12 +224,12 @@ btm_camera %>%
 
 btm_camera %>% 
   filter(FDR < fdr_cut) %>% 
-  datatable() %>% 
-  formatRound(columns = c("PValue", "FDR"), digits = 4)
+  headerKable() %>%
+  kableExtra::scroll_box(height="300px")
 ```
 
 
-###T4  
+### T4  
 
 ```{r T4}
 
@@ -262,11 +260,11 @@ btm_camera %>%
 
 btm_camera %>% 
   filter(FDR < fdr_cut) %>% 
-  datatable() %>% 
-  formatRound(columns = c("PValue", "FDR"), digits = 4)
+  headerKable() %>%
+  kableExtra::scroll_box(height="300px")
 ```
 
-###T5  
+### T5  
 
 ```{r T5}
 
@@ -297,8 +295,8 @@ btm_camera %>%
 
 btm_camera %>% 
   filter(FDR < fdr_cut) %>% 
-  datatable() %>% 
-  formatRound(columns = c("PValue", "FDR"), digits = 4)
+  headerKable() %>%
+  kableExtra::scroll_box(height="300px")
 ```
  
  
@@ -307,7 +305,7 @@ btm_camera %>%
 write_csv(all_res, path=here("output/Vahey_GSEA_disease.csv"))
 ```
  
-#Heatmap of significant gene-sets
+# Heatmap of significant gene-sets
 
 ```{r heat_params}
 new_fdr <- 0.01
@@ -345,12 +343,13 @@ genies %>%
   arrange(FDR) %>%
   select(-c(sign, FDR_sign)) %>%
   head(30) %>%
-  headerKable()
+  headerKable() %>%
+  kableExtra::scroll_box(height="300px")
   
 ```
   
   
-##Summary  
+## Summary  
   
 ```{r summary}
 tibble(visit=sort(unique(gsea_eset$visit)), "significant genesets"=num_sig) %>%
